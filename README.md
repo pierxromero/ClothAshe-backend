@@ -1,2 +1,3 @@
-# ClothAshe-backend
-RESTful API for an online clothing store built with Spring Boot, Java, and MySQL. Features user management with Spring Security, product CRUD, shopping cart, reviews, favorites, inquiries, and order processing with simulated payments. Designed for scalability and maintainability.
+# Entity - Database
+Description:
+Added the main entities required for the application’s functionality and database persistence. Also configured the connection to the database to ensure proper integration.
