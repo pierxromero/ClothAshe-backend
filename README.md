@@ -1,2 +1,2 @@
-# ClothAshe-backend
-RESTful API for an online clothing store built with Spring Boot, Java, and MySQL. Features user management with Spring Security, product CRUD, shopping cart, reviews, favorites, inquiries, and order processing with simulated payments. Designed for scalability and maintainability.
+# Implement OpenAPI Documentation
+Added OpenAPI (Swagger) documentation support by annotating all existing DTO classes. This marks the initial step in documenting the API, providing clear and structured metadata for the data transfer objects. Further documentation will continue progressively throughout the project.
