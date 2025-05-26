@@ -1,6 +1,7 @@
 package com.clothashe.clotashe_backend.model.dto.user;
 import com.clothashe.clotashe_backend.model.dto.auth.AuthInfoDTO;
 import com.clothashe.clotashe_backend.model.dto.cart.CartDTO;
+import com.clothashe.clotashe_backend.model.enums.Role;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
@@ -56,4 +57,8 @@ public class UserDTO {
     @Schema(description = "List of addresses associated with the user.")
     @NotEmpty(message = "Addresses list must contain at least one item")
     private List<@Valid AddressDTO> addresses;
+
+    @Schema(description = "Role assigned to the user.", example = "CLIENT", required = true)
+    @NotNull(message = "Role must be assigned")
+    private Role role;  // Campo role agregado
 }

@@ -2,7 +2,7 @@ package com.clothashe.clotashe_backend.model.entity.admin;
 
 
 import com.clothashe.clotashe_backend.model.entity.auth.AuthInfoEntity;
-import com.clothashe.clotashe_backend.model.enums.AdminRole;
+import com.clothashe.clotashe_backend.model.enums.Role;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -35,7 +35,7 @@ public class AdminEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "position", nullable = false)
-    private AdminRole position;
+    private Role position;
 
     @Column(name = "is_active", nullable = false)
     private Boolean isActive;

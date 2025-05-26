@@ -7,7 +7,6 @@ import com.clothashe.clotashe_backend.model.entity.product.ProductEntity;
 import com.clothashe.clotashe_backend.repository.product.ProductRepository;
 import com.clothashe.clotashe_backend.service.product.ProductService;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -31,7 +30,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public ProductDTO update(Long id, ProductDTO dto) {
         ProductEntity existing = productRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
+            .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
         ProductEntity updated = productMapper.toEntity(dto);
         updated.setId(id);
         return productMapper.toDto(productRepository.save(updated));
@@ -40,16 +39,16 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public ProductDTO getById(Long id) {
         return productRepository.findById(id)
-                .map(productMapper::toDto)
-                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
+            .map(productMapper::toDto)
+            .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
     }
 
     @Override
     public List<ProductDTO> getAll() {
         return productRepository.findAll()
-                .stream()
-                .map(productMapper::toDto)
-                .collect(Collectors.toList());
+            .stream()
+            .map(productMapper::toDto)
+            .collect(Collectors.toList());
     }
 
     @Override

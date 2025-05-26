@@ -1,7 +1,7 @@
 package com.clothashe.clotashe_backend.model.dto.admin;
 
 import com.clothashe.clotashe_backend.model.dto.auth.AuthInfoDTO;
-import com.clothashe.clotashe_backend.model.enums.AdminRole;
+import com.clothashe.clotashe_backend.model.enums.Role;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
@@ -31,7 +31,7 @@ public class AdminDTO {
 
     @NotNull(message = "Admin role is required.")
     @Schema(description = "Administrative role or position held by the user.", example = "MANAGER")
-    private AdminRole position;
+    private Role position;
 
     @NotNull(message = "Active status must not be null.")
     @Schema(description = "Whether the admin account is currently active.", example = "true")

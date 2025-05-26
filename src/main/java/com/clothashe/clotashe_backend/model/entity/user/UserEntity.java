@@ -4,6 +4,7 @@ import com.clothashe.clotashe_backend.model.entity.auth.AuthInfoEntity;
 import com.clothashe.clotashe_backend.model.entity.cart.CartEntity;
 import com.clothashe.clotashe_backend.model.entity.core.Person;
 import com.clothashe.clotashe_backend.model.entity.order.OrderEntity;
+import com.clothashe.clotashe_backend.model.enums.Role;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -45,4 +46,8 @@ public class UserEntity extends Person {
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private CartEntity cart;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false)
+    private Role role;  // Nuevo campo agregado
 }
