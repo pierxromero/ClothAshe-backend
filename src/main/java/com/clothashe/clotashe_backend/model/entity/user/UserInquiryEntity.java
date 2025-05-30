@@ -1,12 +1,10 @@
 package com.clothashe.clotashe_backend.model.entity.user;
 
-import com.clothashe.clotashe_backend.model.entity.admin.AdminEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
-
 @Entity
 @Table(name = "tbl_user_inquiry")
 @Getter
@@ -43,6 +41,6 @@ public class UserInquiryEntity {
     private UserEntity userInquiry;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "admin_id")
-    private AdminEntity adminInquiry;
+    @JoinColumn(name = "responder_user_id")
+    private UserEntity answeredBy;
 }

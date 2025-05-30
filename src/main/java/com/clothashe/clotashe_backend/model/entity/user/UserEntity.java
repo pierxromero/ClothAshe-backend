@@ -2,7 +2,6 @@ package com.clothashe.clotashe_backend.model.entity.user;
 
 import com.clothashe.clotashe_backend.model.entity.auth.AuthInfoEntity;
 import com.clothashe.clotashe_backend.model.entity.cart.CartEntity;
-import com.clothashe.clotashe_backend.model.entity.core.Person;
 import com.clothashe.clotashe_backend.model.entity.order.OrderEntity;
 import com.clothashe.clotashe_backend.model.enums.Role;
 import jakarta.persistence.*;
@@ -11,7 +10,6 @@ import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDateTime;
 import java.util.List;
-
 @Entity
 @Getter
 @Setter
@@ -20,16 +18,23 @@ import java.util.List;
 @AllArgsConstructor
 @SuperBuilder
 @Table(name = "tbl_users")
-@AttributeOverrides({
-        @AttributeOverride(name = "id", column = @Column(name = "user_id")),
-        @AttributeOverride(name = "fullName", column = @Column(name = "user_full_name")),
-        @AttributeOverride(name = "email", column = @Column(name = "user_email", nullable = false, unique = true)),
-        @AttributeOverride(name = "numberPhone", column = @Column(name = "user_phone", nullable = false, unique = true))
-})
-public class UserEntity extends Person {
+public class UserEntity {
 
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JoinColumn(name = "auth_info_id", unique = true, nullable = false)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "user_id")
+    private Long id;
+
+    @Column(name = "user_full_name")
+    private String fullName;
+
+    @Column(name = "user_email", nullable = false, unique = true)
+    private String email;
+
+    @Column(name = "user_phone", nullable = false, unique = true)
+    private String numberPhone;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private AuthInfoEntity authInfo;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -49,5 +54,5 @@ public class UserEntity extends Person {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)
-    private Role role;  // Nuevo campo agregado
+    private Role role;
 }

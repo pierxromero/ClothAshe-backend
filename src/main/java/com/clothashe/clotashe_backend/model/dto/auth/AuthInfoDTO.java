@@ -1,6 +1,8 @@
 package com.clothashe.clotashe_backend.model.dto.auth;
 
+import com.clothashe.clotashe_backend.model.dto.user.UserDTO;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.*;
 
@@ -42,4 +44,9 @@ public class AuthInfoDTO {
     @NotNull(message = "Locked status must not be null.")
     @Schema(description = "Indicates whether the account is currently locked.", example = "false")
     private Boolean isLocked;
+
+    @Schema(description = "Authentication information including linked user.")
+    @Valid
+    @NotNull(message = "User must be linked to auth info.")
+    private UserDTO user;
 }

@@ -39,10 +39,6 @@ public class UserDTO {
     )
     private String numberPhone;
 
-    @Schema(description = "Authentication information of the user.", required = true)
-    @NotNull(message = "Authentication info must not be null")
-    @Valid
-    private AuthInfoDTO authInfoId;
 
     @Schema(description = "Date and time of the last login.", example = "2025-05-24T18:45:00")
     private LocalDateTime lastLoginDate;

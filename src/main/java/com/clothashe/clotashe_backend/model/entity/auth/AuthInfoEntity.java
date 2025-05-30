@@ -1,9 +1,16 @@
 package com.clothashe.clotashe_backend.model.entity.auth;
 
+import com.clothashe.clotashe_backend.model.entity.user.UserEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 @Entity
 @Table(name = "tbl_auth_info")
@@ -14,7 +21,7 @@ import java.time.LocalDateTime;
 @Builder
 @ToString
 
-public class AuthInfoEntity {
+public class AuthInfoEntity implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -38,4 +45,21 @@ public class AuthInfoEntity {
 
     @Column(name = "is_locked", nullable = false)
     private Boolean isLocked;
+
+    @OneToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private UserEntity user;
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return Collections.singletonList(
+                new SimpleGrantedAuthority("ROLE_" + user.getRole().name())
+        );
+    }
+    @Override public String getPassword() { return passwordHash; }
+    @Override public String getUsername() { return username; }
+    @Override public boolean isAccountNonExpired() { return true; }
+    @Override public boolean isAccountNonLocked() { return !isLocked; }
+    @Override public boolean isCredentialsNonExpired() { return true; }
+    @Override public boolean isEnabled() { return isEnabled; }
 }

@@ -1,7 +1,6 @@
 package com.clothashe.clotashe_backend.model.dto.user;
 
 
-import com.clothashe.clotashe_backend.model.dto.admin.AdminDTO;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
@@ -44,9 +43,9 @@ public class UserInquiryDTO {
     @Schema(description = "User who submitted the inquiry.", required = true)
     @NotNull(message = "User information must not be null")
     @Valid
-    private UserDTO userId;
+    private UserDTO userInquiry;
 
-    @Schema(description = "Administrator who answered the inquiry, if applicable.")
+    @Schema(description = "User who answered the inquiry, if applicable.")
     @Valid
-    private AdminDTO adminId;
+    private UserDTO answeredBy;
 }
