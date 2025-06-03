@@ -19,6 +19,9 @@ public enum OrderStatus {
     @Schema(description = "Order has been cancelled.")
     CANCELLED,
 
+    @Schema(description = "Order has been paid by the customer.")
+    PAID,
+
     @Schema(description = "Order has been returned by the customer.")
     RETURNED
 }

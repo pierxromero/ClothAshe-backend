@@ -1,62 +1,117 @@
 package com.clothashe.clotashe_backend.service.misc.impl;
 
-import com.clothashe.clotashe_backend.exception.ResourceNotFoundException;
 import com.clothashe.clotashe_backend.mapper.misc.FavoriteProductMapper;
-import com.clothashe.clotashe_backend.model.dto.user.FavoriteProductDTO;
+import com.clothashe.clotashe_backend.model.dto.user.create.CreateFavoriteProductRequestDTO;
+import com.clothashe.clotashe_backend.model.dto.user.response.FavoriteProductResponseDTO;
+import com.clothashe.clotashe_backend.model.entity.product.ProductEntity;
 import com.clothashe.clotashe_backend.model.entity.user.FavoriteProductEntity;
+import com.clothashe.clotashe_backend.model.entity.user.UserEntity;
+import com.clothashe.clotashe_backend.model.enums.Role;
 import com.clothashe.clotashe_backend.repository.misc.FavoriteProductRepository;
+import com.clothashe.clotashe_backend.repository.product.ProductRepository;
+import com.clothashe.clotashe_backend.service.auth.impl.AuthService;
 import com.clothashe.clotashe_backend.service.misc.FavoriteProductService;
+import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
-
 @Service
+@RequiredArgsConstructor
 public class FavoriteProductServiceImpl implements FavoriteProductService {
 
     private final FavoriteProductRepository favoriteProductRepository;
+    private final ProductRepository productRepository;
+    private final AuthService authService;
     private final FavoriteProductMapper favoriteProductMapper;
 
-    public FavoriteProductServiceImpl(FavoriteProductRepository favoriteProductRepository, FavoriteProductMapper favoriteProductMapper) {
-        this.favoriteProductRepository = favoriteProductRepository;
-        this.favoriteProductMapper = favoriteProductMapper;
+    @Override
+    @Transactional
+    public FavoriteProductResponseDTO addFavorite(CreateFavoriteProductRequestDTO dto) {
+        UserEntity user = authService.getAuthenticatedUser();
+
+        ProductEntity product = productRepository.findById(dto.getProductId())
+                .orElseThrow(() -> new EntityNotFoundException("Product not found with ID: " + dto.getProductId()));
+
+        if (isProductFavoritedByUser(user.getId(), product.getId())) {
+            throw new IllegalArgumentException("Product is already in favorites");
+        }
+
+        FavoriteProductEntity favorite = FavoriteProductEntity.builder()
+                .user(user)
+                .productFavorite(product)
+                .addedDate(LocalDateTime.now())
+                .build();
+
+        FavoriteProductEntity saved = favoriteProductRepository.save(favorite);
+
+        return favoriteProductMapper.toDto(saved);
     }
 
     @Override
-    public FavoriteProductDTO create(FavoriteProductDTO dto) {
-        FavoriteProductEntity entity = favoriteProductMapper.toEntity(dto);
-        return favoriteProductMapper.toDto(favoriteProductRepository.save(entity));
-    }
+    @Transactional(readOnly = true)
+    public List<FavoriteProductResponseDTO> getMyFavorites() {
+        UserEntity user = authService.getAuthenticatedUser();
 
-    @Override
-    public FavoriteProductDTO update(Long id, FavoriteProductDTO dto) {
-        FavoriteProductEntity existing = favoriteProductRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("FavoriteProduct not found with id: " + id));
-        FavoriteProductEntity updated = favoriteProductMapper.toEntity(dto);
-        updated.setId(id);
-        return favoriteProductMapper.toDto(favoriteProductRepository.save(updated));
-    }
+        List<FavoriteProductEntity> favorites = favoriteProductRepository.findByUserId(user.getId());
 
-    @Override
-    public FavoriteProductDTO getById(Long id) {
-        return favoriteProductRepository.findById(id)
-                .map(favoriteProductMapper::toDto)
-                .orElseThrow(() -> new ResourceNotFoundException("FavoriteProduct not found with id: " + id));
-    }
-
-    @Override
-    public List<FavoriteProductDTO> getAll() {
-        return favoriteProductRepository.findAll()
-                .stream()
+        return favorites.stream()
                 .map(favoriteProductMapper::toDto)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public void delete(Long id) {
-        if (!favoriteProductRepository.existsById(id)) {
-            throw new ResourceNotFoundException("FavoriteProduct not found with id: " + id);
+    @Transactional(readOnly = true)
+    public List<FavoriteProductResponseDTO> getFavoritesByUserId(Long userId) {
+        UserEntity requester = authService.getAuthenticatedUser();
+
+        if (!requester.getRole().equals(Role.ADMIN)) {
+            throw new AccessDeniedException("Only admins can access other users' favorites");
         }
-        favoriteProductRepository.deleteById(id);
+        List<FavoriteProductEntity> favorites = favoriteProductRepository.findByUserId(userId);
+
+        return favorites.stream()
+                .map(favoriteProductMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public void removeFavorite(Long favoriteId) {
+        FavoriteProductEntity favorite = favoriteProductRepository.findById(favoriteId)
+                .orElseThrow(() -> new EntityNotFoundException("Favorite product not found with ID: " + favoriteId));
+
+        UserEntity user = authService.getAuthenticatedUser();
+
+        if (!favorite.getUser().getId().equals(user.getId())) {
+            throw new AccessDeniedException("You are not authorized to delete this favorite");
+        }
+
+        favoriteProductRepository.delete(favorite);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public FavoriteProductResponseDTO getFavoriteById(Long favoriteId) {
+        FavoriteProductEntity favorite = favoriteProductRepository.findById(favoriteId)
+                .orElseThrow(() -> new EntityNotFoundException("Favorite product not found with ID: " + favoriteId));
+
+        UserEntity user = authService.getAuthenticatedUser();
+
+        if (!favorite.getUser().getId().equals(user.getId())) {
+            throw new AccessDeniedException("You are not authorized to view this favorite");
+        }
+
+        return favoriteProductMapper.toDto(favorite);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean isProductFavoritedByUser(Long userId, Long productId) {
+        return favoriteProductRepository.existsByUserIdAndProductFavoriteId(userId, productId);
     }
 }

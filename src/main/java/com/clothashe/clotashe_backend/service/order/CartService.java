@@ -1,17 +1,24 @@
 package com.clothashe.clotashe_backend.service.order;
 
-import com.clothashe.clotashe_backend.model.dto.cart.CartDTO;
+import com.clothashe.clotashe_backend.model.dto.cart.create.CreateCartItemRequestDTO;
+import com.clothashe.clotashe_backend.model.dto.cart.response.CartItemResponseDTO;
+import com.clothashe.clotashe_backend.model.dto.cart.response.CartResponseDTO;
+import com.clothashe.clotashe_backend.model.dto.cart.update.UpdateCartItemRequestDTO;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public interface CartService {
-    CartDTO create(CartDTO dto);
 
-    CartDTO update(Long id, CartDTO dto);
+    CartResponseDTO getActiveCartForUser();
 
-    CartDTO getById(Long id);
+    CartItemResponseDTO addItemToCart(CreateCartItemRequestDTO dto);
 
-    List<CartDTO> getAll();
+    CartItemResponseDTO updateCartItem(Long cartItemId, UpdateCartItemRequestDTO dto);
 
-    void delete(Long id);
+    void removeItemFromCart(Long cartItemId);
+
+    void clearCart();
+
+    BigDecimal calculateCartSubtotal();
 }

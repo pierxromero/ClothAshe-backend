@@ -10,6 +10,7 @@ import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDateTime;
 import java.util.List;
+
 @Entity
 @Getter
 @Setter
@@ -41,7 +42,7 @@ public class UserEntity {
     private List<OrderEntity> purchaseHistory;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<FavoriteProductEntity> favoriteProducts;
+    private List<FavoriteProductEntity> favorites;
 
     @Column(name = "last_login")
     private LocalDateTime lastLoginDate;

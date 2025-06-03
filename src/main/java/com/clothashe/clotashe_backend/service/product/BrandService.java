@@ -1,17 +1,20 @@
 package com.clothashe.clotashe_backend.service.product;
 
-import com.clothashe.clotashe_backend.model.dto.product.BrandDTO;
+import com.clothashe.clotashe_backend.model.dto.product.create.CreateBrandRequestDTO;
+import com.clothashe.clotashe_backend.model.dto.product.response.BrandResponseDTO;
+import com.clothashe.clotashe_backend.model.dto.product.update.UpdateBrandRequestDTO;
 
 import java.util.List;
 
 public interface BrandService {
-    BrandDTO create(BrandDTO dto);
 
-    BrandDTO update(Long id, BrandDTO dto);
+    BrandResponseDTO create(CreateBrandRequestDTO dto);
 
-    BrandDTO getById(Long id);
+    BrandResponseDTO update(Long id, UpdateBrandRequestDTO dto);
 
-    List<BrandDTO> getAll();
+    BrandResponseDTO findById(Long id);
+
+    List<BrandResponseDTO> findAll();
 
     void delete(Long id);
 }

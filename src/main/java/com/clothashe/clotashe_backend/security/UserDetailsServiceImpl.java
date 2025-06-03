@@ -15,7 +15,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        AuthInfoEntity authInfo = authInfoRepository.findByUsername(username)
+        AuthInfoEntity authInfo = authInfoRepository.findByEmail(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
 
         return authInfo;

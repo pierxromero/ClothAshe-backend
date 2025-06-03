@@ -1,17 +1,25 @@
 package com.clothashe.clotashe_backend.service.misc;
 
-import com.clothashe.clotashe_backend.model.dto.review.ProductCommentDTO;
+import com.clothashe.clotashe_backend.model.dto.review.create.CreateProductCommentRequestDTO;
+import com.clothashe.clotashe_backend.model.dto.review.response.ProductCommentResponseDTO;
+import com.clothashe.clotashe_backend.model.dto.review.update.UpdateProductCommentRequestDTO;
 
 import java.util.List;
 
 public interface ProductCommentService {
-    ProductCommentDTO create(ProductCommentDTO dto);
+    ProductCommentResponseDTO createComment(CreateProductCommentRequestDTO dto);
 
-    ProductCommentDTO update(Long id, ProductCommentDTO dto);
+    ProductCommentResponseDTO updateOwnComment(Long commentId, UpdateProductCommentRequestDTO dto);
 
-    ProductCommentDTO getById(Long id);
+    List<ProductCommentResponseDTO> getMyComments();
 
-    List<ProductCommentDTO> getAll();
+    void deleteComment(Long commentId);
 
-    void delete(Long id);
+    List<ProductCommentResponseDTO> getCommentsByUser(Long userId);
+
+    List<ProductCommentResponseDTO> getCommentsByProduct(Long productId);
+
+    List<ProductCommentResponseDTO> getAllComments();
+
+    ProductCommentResponseDTO getCommentById(Long commentId);
 }

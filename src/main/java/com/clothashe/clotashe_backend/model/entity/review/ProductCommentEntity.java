@@ -34,10 +34,10 @@ public class ProductCommentEntity {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
-    private UserEntity userComment;
+    private UserEntity user;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "product_id", nullable = false)
-    private ProductEntity productComment;
+    private ProductEntity product;
 
 }

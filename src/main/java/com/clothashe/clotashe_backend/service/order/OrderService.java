@@ -1,17 +1,33 @@
 package com.clothashe.clotashe_backend.service.order;
 
-import com.clothashe.clotashe_backend.model.dto.order.OrderDTO;
+import com.clothashe.clotashe_backend.model.dto.order.create.CreateOrderRequestDTO;
+import com.clothashe.clotashe_backend.model.dto.order.create.CreatePaymentRequestDTO;
+import com.clothashe.clotashe_backend.model.dto.order.response.OrderResponseDTO;
+import com.clothashe.clotashe_backend.model.dto.order.response.PaymentResponseDTO;
+import com.clothashe.clotashe_backend.model.enums.OrderStatus;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 
 public interface OrderService {
-    OrderDTO create(OrderDTO dto);
 
-    OrderDTO update(Long id, OrderDTO dto);
+    OrderResponseDTO createOrder(CreateOrderRequestDTO dto);
 
-    OrderDTO getById(Long id);
+    PaymentResponseDTO createPayment(CreatePaymentRequestDTO dto);
 
-    List<OrderDTO> getAll();
+    List<OrderResponseDTO> listUserOrders();
 
-    void delete(Long id);
+    OrderResponseDTO getOrderById(Long orderId);
+
+    OrderResponseDTO returnOrder(Long orderId);
+
+
+
+    Page<OrderResponseDTO> listAllOrders(OrderStatus status, Long userId, int page, int size);
+
+
+    OrderResponseDTO updateOrderStatus(Long orderId, OrderStatus newStatus);
+
+
+    void cancelOrder(Long orderId);
 }

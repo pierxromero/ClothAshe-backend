@@ -1,51 +1,60 @@
 package com.clothashe.clotashe_backend.service.product.impl;
 
+import com.clothashe.clotashe_backend.exception.ResourceAlreadyExistsException;
 import com.clothashe.clotashe_backend.exception.ResourceNotFoundException;
 import com.clothashe.clotashe_backend.mapper.product.SizeMapper;
-import com.clothashe.clotashe_backend.model.dto.product.SizeDTO;
+import com.clothashe.clotashe_backend.model.dto.product.create.CreateSizeRequestDTO;
+import com.clothashe.clotashe_backend.model.dto.product.response.SizeResponseDTO;
+import com.clothashe.clotashe_backend.model.dto.product.update.UpdateSizeRequestDTO;
 import com.clothashe.clotashe_backend.model.entity.product.SizeEntity;
 import com.clothashe.clotashe_backend.repository.product.SizeRepository;
 import com.clothashe.clotashe_backend.service.product.SizeService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
-
 @Service
+@RequiredArgsConstructor
 public class SizeServiceImpl implements SizeService {
 
     private final SizeRepository sizeRepository;
     private final SizeMapper sizeMapper;
 
-    public SizeServiceImpl(SizeRepository sizeRepository, SizeMapper sizeMapper) {
-        this.sizeRepository = sizeRepository;
-        this.sizeMapper = sizeMapper;
-    }
-
     @Override
-    public SizeDTO create(SizeDTO dto) {
+    @Transactional
+    public SizeResponseDTO create(CreateSizeRequestDTO dto) {
+        if (sizeRepository.existsByCodeIgnoreCase(dto.getCode())) {
+            throw new ResourceAlreadyExistsException("Ya existe un talle con el código: " + dto.getCode());
+        }
         SizeEntity entity = sizeMapper.toEntity(dto);
-        return sizeMapper.toDto(sizeRepository.save(entity));
+        SizeEntity saved = sizeRepository.save(entity);
+        return sizeMapper.toDto(saved);
     }
 
     @Override
-    public SizeDTO update(Long id, SizeDTO dto) {
+    @Transactional
+    public SizeResponseDTO update(Long id, UpdateSizeRequestDTO dto) {
         SizeEntity existing = sizeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Size not found with id: " + id));
-        SizeEntity updated = sizeMapper.toEntity(dto);
-        updated.setId(id);
-        return sizeMapper.toDto(sizeRepository.save(updated));
+
+        sizeMapper.updateEntityFromDto(dto, existing);
+        SizeEntity updated = sizeRepository.save(existing);
+        return sizeMapper.toDto(updated);
     }
 
     @Override
-    public SizeDTO getById(Long id) {
-        return sizeRepository.findById(id)
-                .map(sizeMapper::toDto)
+    @Transactional(readOnly = true)
+    public SizeResponseDTO findById(Long id) {
+        SizeEntity entity = sizeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Size not found with id: " + id));
+        return sizeMapper.toDto(entity);
     }
 
     @Override
-    public List<SizeDTO> getAll() {
+    @Transactional(readOnly = true)
+    public List<SizeResponseDTO> findAll() {
         return sizeRepository.findAll()
                 .stream()
                 .map(sizeMapper::toDto)
@@ -53,6 +62,7 @@ public class SizeServiceImpl implements SizeService {
     }
 
     @Override
+    @Transactional
     public void delete(Long id) {
         if (!sizeRepository.existsById(id)) {
             throw new ResourceNotFoundException("Size not found with id: " + id);

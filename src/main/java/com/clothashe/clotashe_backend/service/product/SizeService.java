@@ -1,17 +1,20 @@
 package com.clothashe.clotashe_backend.service.product;
 
-import com.clothashe.clotashe_backend.model.dto.product.SizeDTO;
+import com.clothashe.clotashe_backend.model.dto.product.create.CreateSizeRequestDTO;
+import com.clothashe.clotashe_backend.model.dto.product.response.SizeResponseDTO;
+import com.clothashe.clotashe_backend.model.dto.product.update.UpdateSizeRequestDTO;
 
 import java.util.List;
 
 public interface SizeService {
-    SizeDTO create(SizeDTO dto);
 
-    SizeDTO update(Long id, SizeDTO dto);
+    SizeResponseDTO create(CreateSizeRequestDTO dto);
 
-    SizeDTO getById(Long id);
+    SizeResponseDTO update(Long id, UpdateSizeRequestDTO dto);
 
-    List<SizeDTO> getAll();
+    SizeResponseDTO findById(Long id);
+
+    List<SizeResponseDTO> findAll();
 
     void delete(Long id);
 }

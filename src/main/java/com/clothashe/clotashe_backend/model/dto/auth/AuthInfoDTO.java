@@ -1,6 +1,7 @@
 package com.clothashe.clotashe_backend.model.dto.auth;
 
-import com.clothashe.clotashe_backend.model.dto.user.UserDTO;
+import com.clothashe.clotashe_backend.model.dto.user.response.UserDTO;
+import com.clothashe.clotashe_backend.model.dto.user.response.UserResponseDTO;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
@@ -20,10 +21,11 @@ public class AuthInfoDTO {
     @Schema(description = "Unique identifier of the authentication record.", example = "1")
     private Long id;
 
-    @NotBlank(message = "Username must not be empty.")
-    @Size(min = 4, max = 50, message = "Username must be between 4 and 50 characters.")
-    @Schema(description = "Username associated with the account.", example = "john_doe", minLength = 4, maxLength = 50)
-    private String username;
+    @NotBlank(message = "Email must not be empty.")
+    @Email(message = "Email should be valid.")
+    @Size(min = 4, max = 50, message = "Email must be between 4 and 50 characters.")
+    @Schema(description = "Email associated with the account.", example = "john@example.com", minLength = 4, maxLength = 50)
+    private String email;
 
     @NotBlank(message = "Password hash must not be empty.")
     @Schema(description = "Hashed password used for authentication.", example = "$2a$10$WzY...sQH")
@@ -48,5 +50,5 @@ public class AuthInfoDTO {
     @Schema(description = "Authentication information including linked user.")
     @Valid
     @NotNull(message = "User must be linked to auth info.")
-    private UserDTO user;
+    private UserResponseDTO user;
 }

@@ -1,16 +1,18 @@
 package com.clothashe.clotashe_backend.mapper.product;
 
-import com.clothashe.clotashe_backend.model.dto.product.ColorDTO;
+import com.clothashe.clotashe_backend.model.dto.product.create.CreateColorRequestDTO;
+import com.clothashe.clotashe_backend.model.dto.product.response.ColorResponseDTO;
+import com.clothashe.clotashe_backend.model.dto.product.update.UpdateColorRequestDTO;
 import com.clothashe.clotashe_backend.model.entity.product.ColorEntity;
-import com.clothashe.clotashe_backend.service.product.ColorService;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
+import org.mapstruct.*;
 
-@Mapper(componentModel = "spring", uses = ColorService.class)
+@Mapper(componentModel = "spring")
 public interface ColorMapper {
 
-    ColorDTO toDto(ColorEntity entity);
+    ColorResponseDTO toDto(ColorEntity entity);
 
+    ColorEntity toEntity(CreateColorRequestDTO dto);
 
-    ColorEntity toEntity(ColorDTO dto);
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    void updateEntityFromDto(UpdateColorRequestDTO dto, @MappingTarget ColorEntity entity);
 }

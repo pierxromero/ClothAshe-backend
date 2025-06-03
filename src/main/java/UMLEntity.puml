@@ -1,0 +1,188 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+' Enumeraciones
+enum Role {
+  ADMIN
+  USER
+}
+
+enum PaymentMethod {
+  CREDIT_CARD
+  PAYPAL
+  BANK_TRANSFER
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum OrderStatus {
+  PENDING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+' Entidades principales
+
+class UserEntity {
+  - Long id
+  - String fullName
+  - String email
+  - String numberPhone
+  - LocalDateTime lastLoginDate
+  - Role role
+}
+
+class AuthInfoEntity {
+  - Long id
+  - String username
+  - String passwordHash
+  - LocalDateTime createdAt
+  - LocalDateTime lastLogin
+  - Boolean isEnabled
+  - Boolean isLocked
+}
+
+class CartEntity {
+  - Long id
+  - LocalDateTime createdDate
+  - Boolean active
+}
+
+class CartItemEntity {
+  - Long id
+  - Integer quantity
+  - BigDecimal unitPrice
+}
+
+class ProductEntity {
+  - Long id
+  - String name
+  - String description
+  - BigDecimal price
+  - Integer stock
+  - Boolean isActive
+  - LocalDateTime createdAt
+}
+
+class CategoryEntity {
+  +Long id
+  +String name
+  +String description
+  +Boolean isActive
+  +LocalDateTime createdAt
+}
+class ColorEntity {
+  +Long id
+  +String name
+  +String hexCode
+}
+class SizeEntity {
+  +Long id
+  +String code
+  +String description
+}
+class BrandEntity {
+  +Long id
+  +String name
+  +String description
+}
+
+class ProductCommentEntity {
+  - Long id
+  - String comment
+  - Integer validation
+  - LocalDateTime commentDate
+}
+
+class OrderEntity {
+  - Long id
+  - LocalDateTime orderDate
+  - BigDecimal totalAmount
+  - OrderStatus status
+  - PaymentMethod paymentMethod
+}
+
+class OrderItemEntity {
+  - Long id
+  - Integer quantity
+  - BigDecimal unitPrice
+  - BigDecimal subtotal
+}
+
+class PaymentEntity {
+  - Long id
+  - BigDecimal amount
+  - PaymentMethod method
+  - LocalDateTime paymentDate
+  - PaymentStatus status
+}
+
+class AddressEntity {
+  +Long id
+  +String street
+  +String number
+  +String city
+  +String province
+  +String postalCode
+  +String country
+  +String additionalInfo
+}
+class FavoriteProductEntity {
+  +Long id
+  +LocalDateTime addedDate
+}
+class UserInquiryEntity {
+  +Long id
+  +String message
+  +LocalDateTime inquiryDate
+  +Boolean answered
+  +String answer
+  +LocalDateTime answerDate
+}
+
+
+' Relaciones
+
+UserEntity "1" -- "1" AuthInfoEntity : authInfo
+UserEntity "1" -- "1" AuthInfoEntity : authInfo
+UserEntity "1" -- "1" CartEntity : cart
+UserEntity "1" -- "0..*" OrderEntity : purchaseHistory
+UserEntity "1" -- "0..*" FavoriteProductEntity : favorites
+UserEntity "1" -- "0..*" AddressEntity : addresses
+UserEntity "1" -- "0..*" ProductCommentEntity : comments
+UserEntity "1" -- "0..*" UserInquiryEntity : inquiries
+UserInquiryEntity "1" -- "1" UserEntity : createdBy
+
+UserEntity "1" -- "0..*" UserInquiryEntity : answeredInquiries
+UserInquiryEntity "0..1" -- "1" UserEntity : answeredBy
+
+CartEntity "1" -- "0..*" CartItemEntity : items
+CartItemEntity "1" -- "1" ProductEntity
+
+ProductEntity "1" -- "0..*" ProductCommentEntity
+ProductEntity "1" -- "0..*" FavoriteProductEntity
+ProductEntity "1" -- "0..*" CartItemEntity
+ProductEntity "1" -- "0..*" OrderItemEntity
+ProductEntity "1" -- CategoryEntity
+ProductEntity "1" -- BrandEntity
+ProductEntity "1" -- ColorEntity
+ProductEntity "1" -- SizeEntity
+
+OrderEntity "1" -- "0..*" OrderItemEntity : items
+OrderEntity "1" -- "1" PaymentEntity : payment
+OrderEntity "1" -- "1" AddressEntity : shippingAddress
+
+PaymentEntity "1" -- "1" OrderEntity
+
+' Estilos
+abstract class AbstractEntity
+interface UserDetails
+
+AuthInfoEntity ..|> UserDetails
+
+@enduml

@@ -1,57 +1,70 @@
 package com.clothashe.clotashe_backend.service.product.impl;
 
+import com.clothashe.clotashe_backend.exception.ResourceAlreadyExistsException;
 import com.clothashe.clotashe_backend.exception.ResourceNotFoundException;
 import com.clothashe.clotashe_backend.mapper.product.ColorMapper;
-import com.clothashe.clotashe_backend.model.dto.product.ColorDTO;
+import com.clothashe.clotashe_backend.model.dto.product.create.CreateColorRequestDTO;
+import com.clothashe.clotashe_backend.model.dto.product.response.ColorResponseDTO;
+import com.clothashe.clotashe_backend.model.dto.product.update.UpdateColorRequestDTO;
 import com.clothashe.clotashe_backend.model.entity.product.ColorEntity;
 import com.clothashe.clotashe_backend.repository.product.ColorRepository;
 import com.clothashe.clotashe_backend.service.product.ColorService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 import java.util.stream.Collectors;
-
 @Service
+@RequiredArgsConstructor
 public class ColorServiceImpl implements ColorService {
 
     private final ColorRepository colorRepository;
     private final ColorMapper colorMapper;
 
-    public ColorServiceImpl(ColorRepository colorRepository, ColorMapper colorMapper) {
-        this.colorRepository = colorRepository;
-        this.colorMapper = colorMapper;
-    }
-
     @Override
-    public ColorDTO create(ColorDTO dto) {
+    @Transactional
+    public ColorResponseDTO create(CreateColorRequestDTO dto) {
+        if (colorRepository.existsByNameIgnoreCase(dto.getName())) {
+            throw new ResourceAlreadyExistsException("Ya existe un color con el nombre: " + dto.getName());
+        }
+
         ColorEntity entity = colorMapper.toEntity(dto);
-        return colorMapper.toDto(colorRepository.save(entity));
+        ColorEntity saved = colorRepository.save(entity);
+        return colorMapper.toDto(saved);
     }
 
     @Override
-    public ColorDTO update(Long id, ColorDTO dto) {
+    @Transactional
+    public ColorResponseDTO update(Long id, UpdateColorRequestDTO dto) {
         ColorEntity existing = colorRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Color not found with id: " + id));
-        ColorEntity updated = colorMapper.toEntity(dto);
-        updated.setId(id);
-        return colorMapper.toDto(colorRepository.save(updated));
+                .orElseThrow(() -> new ResourceNotFoundException("Color not found with id: " + id));
+
+        colorMapper.updateEntityFromDto(dto, existing);
+        ColorEntity updated = colorRepository.save(existing);
+
+        return colorMapper.toDto(updated);
     }
 
     @Override
-    public ColorDTO getById(Long id) {
-        return colorRepository.findById(id)
-            .map(colorMapper::toDto)
-            .orElseThrow(() -> new ResourceNotFoundException("Color not found with id: " + id));
+    @Transactional(readOnly = true)
+    public ColorResponseDTO findById(Long id) {
+        ColorEntity entity = colorRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Color not found with id: " + id));
+        return colorMapper.toDto(entity);
     }
 
     @Override
-    public List<ColorDTO> getAll() {
+    @Transactional(readOnly = true)
+    public List<ColorResponseDTO> findAll() {
         return colorRepository.findAll()
-            .stream()
-            .map(colorMapper::toDto)
-            .collect(Collectors.toList());
+                .stream()
+                .map(colorMapper::toDto)
+                .collect(Collectors.toList());
     }
 
     @Override
+    @Transactional
     public void delete(Long id) {
         if (!colorRepository.existsById(id)) {
             throw new ResourceNotFoundException("Color not found with id: " + id);

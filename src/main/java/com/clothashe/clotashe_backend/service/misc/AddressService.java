@@ -1,18 +1,23 @@
 package com.clothashe.clotashe_backend.service.misc;
 
-import com.clothashe.clotashe_backend.model.dto.user.AddressDTO;
+import com.clothashe.clotashe_backend.model.dto.user.create.CreateAddressRequestDTO;
+import com.clothashe.clotashe_backend.model.dto.user.response.AddressResponseDTO;
+import com.clothashe.clotashe_backend.model.dto.user.update.UpdateAddressRequestDTO;
 
 import java.util.List;
+public interface AddressService {
 
-public interface AddressService
-{
-    AddressDTO create(AddressDTO dto);
+    AddressResponseDTO createAddress(CreateAddressRequestDTO dto);
 
-    AddressDTO update(Long id, AddressDTO dto);
+    void deleteAddress(Long addressId);
 
-    AddressDTO getById(Long id);
+    AddressResponseDTO updateAddress(Long addressId, UpdateAddressRequestDTO dto);
 
-    List<AddressDTO> getAll();
+    AddressResponseDTO getAddressById(Long addressId);
 
-    void delete(Long id);
+    List<AddressResponseDTO> getAllMyAddresses();
+
+    List<AddressResponseDTO> getAllAddressesByUserId(Long userId);
+
+    List<AddressResponseDTO> getAllAddresses();
 }

@@ -11,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -28,12 +30,13 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
         );
 
-        AuthInfoEntity user = authInfoRepository.findByUsername(request.getUsername())
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        AuthInfoEntity user = (AuthInfoEntity) authentication.getPrincipal();
 
         String jwtToken = jwtService.generateToken(user);
         return ResponseEntity.ok(new LoginResponse(jwtToken));

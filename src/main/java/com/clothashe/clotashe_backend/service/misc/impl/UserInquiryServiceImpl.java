@@ -2,61 +2,136 @@ package com.clothashe.clotashe_backend.service.misc.impl;
 
 import com.clothashe.clotashe_backend.exception.ResourceNotFoundException;
 import com.clothashe.clotashe_backend.mapper.misc.UserInquiryMapper;
-import com.clothashe.clotashe_backend.model.dto.user.UserInquiryDTO;
+import com.clothashe.clotashe_backend.model.dto.user.create.AnswerInquiryRequestDTO;
+import com.clothashe.clotashe_backend.model.dto.user.create.CreateUserInquiryRequestDTO;
+import com.clothashe.clotashe_backend.model.dto.user.response.UserInquiryResponseDTO;
+import com.clothashe.clotashe_backend.model.entity.user.UserEntity;
 import com.clothashe.clotashe_backend.model.entity.user.UserInquiryEntity;
+import com.clothashe.clotashe_backend.model.enums.Role;
+import com.clothashe.clotashe_backend.repository.auth.UserRepository;
 import com.clothashe.clotashe_backend.repository.misc.UserInquiryRepository;
+import com.clothashe.clotashe_backend.service.auth.impl.AuthService;
 import com.clothashe.clotashe_backend.service.misc.UserInquiryService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
-
 @Service
+@RequiredArgsConstructor
+@Transactional
 public class UserInquiryServiceImpl implements UserInquiryService {
 
-    private final UserInquiryRepository userInquiryRepository;
-    private final UserInquiryMapper userInquiryMapper;
+    private final UserInquiryRepository inquiryRepository;
+    private final UserInquiryMapper inquiryMapper;
+    private final AuthService authService;
+    private final UserRepository userRepository;
 
-    public UserInquiryServiceImpl(UserInquiryRepository userInquiryRepository, UserInquiryMapper userInquiryMapper) {
-        this.userInquiryRepository = userInquiryRepository;
-        this.userInquiryMapper = userInquiryMapper;
+    @Override
+    public UserInquiryResponseDTO createInquiry(CreateUserInquiryRequestDTO dto) {
+        UserEntity user = authService.getAuthenticatedUser();
+
+        UserInquiryEntity inquiry = inquiryMapper.toEntity(dto);
+        inquiry.setUserInquiry(user);
+        inquiry.setAnswered(false);
+        inquiry.setAnswer(null);
+        inquiry.setAnswerDate(null);
+        inquiry.setAnsweredBy(null);
+
+        inquiry = inquiryRepository.save(inquiry);
+        return inquiryMapper.toDto(inquiry);
     }
 
     @Override
-    public UserInquiryDTO create(UserInquiryDTO dto) {
-        UserInquiryEntity entity = userInquiryMapper.toEntity(dto);
-        return userInquiryMapper.toDto(userInquiryRepository.save(entity));
-    }
+    @Transactional(readOnly = true)
+    public Page<UserInquiryResponseDTO> listAllInquiries(Boolean answered, Long userId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("inquiryDate").descending());
 
-    @Override
-    public UserInquiryDTO update(Long id, UserInquiryDTO dto) {
-        UserInquiryEntity existing = userInquiryRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("UserInquiry not found with id: " + id));
-        UserInquiryEntity updated = userInquiryMapper.toEntity(dto);
-        updated.setId(id);
-        return userInquiryMapper.toDto(userInquiryRepository.save(updated));
-    }
+        Page<UserInquiryEntity> inquiries;
 
-    @Override
-    public UserInquiryDTO getById(Long id) {
-        return userInquiryRepository.findById(id)
-                .map(userInquiryMapper::toDto)
-                .orElseThrow(() -> new ResourceNotFoundException("UserInquiry not found with id: " + id));
-    }
-
-    @Override
-    public List<UserInquiryDTO> getAll() {
-        return userInquiryRepository.findAll()
-                .stream()
-                .map(userInquiryMapper::toDto)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public void delete(Long id) {
-        if (!userInquiryRepository.existsById(id)) {
-            throw new ResourceNotFoundException("UserInquiry not found with id: " + id);
+        if (answered != null && userId != null) {
+            inquiries = inquiryRepository.findByAnsweredAndUserInquiryId(answered, userId, pageable);
+        } else if (answered != null) {
+            inquiries = inquiryRepository.findByAnswered(answered, pageable);
+        } else if (userId != null) {
+            inquiries = inquiryRepository.findByUserInquiryId(userId, pageable);
+        } else {
+            inquiries = inquiryRepository.findAll(pageable);
         }
-        userInquiryRepository.deleteById(id);
+
+        return inquiries.map(inquiryMapper::toDto);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserInquiryResponseDTO> listUserInquiries() {
+        UserEntity user = authService.getAuthenticatedUser();
+        List<UserInquiryEntity> inquiries = inquiryRepository.findByUserInquiryIdOrderByInquiryDateDesc(user.getId());
+        return inquiries.stream()
+                .map(inquiryMapper::toDto)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public UserInquiryResponseDTO getInquiryById(Long inquiryId) {
+        UserEntity user = authService.getAuthenticatedUser();
+        UserInquiryEntity inquiry = inquiryRepository.findById(inquiryId)
+                .orElseThrow(() -> new ResourceNotFoundException("Inquiry not found"));
+
+        // Check if user has permission to access this inquiry
+        if (!user.getRole().equals(Role.ADMIN) && !inquiry.getUserInquiry().getId().equals(user.getId())) {
+            throw new AccessDeniedException("No permission to access this inquiry");
+        }
+
+        return inquiryMapper.toDto(inquiry);
+    }
+
+    @Override
+    public UserInquiryResponseDTO answerInquiry(AnswerInquiryRequestDTO dto) {
+        UserEntity adminUser = authService.getAuthenticatedUser();
+
+        if (!adminUser.getRole().equals(Role.ADMIN)) {
+            throw new AccessDeniedException("Only admin can answer inquiries");
+        }
+
+        UserInquiryEntity inquiry = inquiryRepository.findById(dto.getInquiryId())
+                .orElseThrow(() -> new ResourceNotFoundException("Inquiry not found"));
+
+        if (Boolean.TRUE.equals(inquiry.getAnswered())) {
+            throw new IllegalStateException("Inquiry already answered");
+        }
+
+        inquiry.setAnswered(true);
+        inquiry.setAnswer(dto.getAnswer());
+        inquiry.setAnswerDate(LocalDateTime.now());
+        inquiry.setAnsweredBy(adminUser);
+
+        inquiry = inquiryRepository.save(inquiry);
+        return inquiryMapper.toDto(inquiry);
+    }
+
+    @Override
+    public void deleteInquiry(Long inquiryId) {
+        UserEntity currentUser = authService.getAuthenticatedUser();
+
+        UserInquiryEntity inquiry = inquiryRepository.findById(inquiryId)
+                .orElseThrow(() -> new ResourceNotFoundException("Inquiry not found"));
+
+        boolean isAdmin = currentUser.getRole().equals(Role.ADMIN);
+        boolean isOwner = inquiry.getUserInquiry().getId().equals(currentUser.getId());
+
+        if (!isAdmin && !isOwner) {
+            throw new AccessDeniedException("You can only delete your own inquiries");
+        }
+
+        inquiryRepository.deleteById(inquiryId);
     }
 }

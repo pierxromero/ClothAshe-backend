@@ -25,10 +25,6 @@ public class PaymentEntity {
     @Column(name = "amount", nullable = false, precision = 14, scale = 2)
     private BigDecimal amount;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "method", nullable = false)
-    private PaymentMethod method;
-
     @Column(name = "payment_date", nullable = false)
     private LocalDateTime paymentDate;
 

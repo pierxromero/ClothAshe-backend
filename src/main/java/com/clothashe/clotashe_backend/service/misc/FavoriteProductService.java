@@ -1,17 +1,16 @@
 package com.clothashe.clotashe_backend.service.misc;
 
-import com.clothashe.clotashe_backend.model.dto.user.FavoriteProductDTO;
+import com.clothashe.clotashe_backend.model.dto.user.create.CreateFavoriteProductRequestDTO;
+import com.clothashe.clotashe_backend.model.dto.user.response.FavoriteProductResponseDTO;
 
 import java.util.List;
 
 public interface FavoriteProductService {
-    FavoriteProductDTO create(FavoriteProductDTO dto);
 
-    FavoriteProductDTO update(Long id, FavoriteProductDTO dto);
-
-    FavoriteProductDTO getById(Long id);
-
-    List<FavoriteProductDTO> getAll();
-
-    void delete(Long id);
+    FavoriteProductResponseDTO addFavorite(CreateFavoriteProductRequestDTO dto);
+    List<FavoriteProductResponseDTO> getMyFavorites();
+    List<FavoriteProductResponseDTO> getFavoritesByUserId(Long userId);
+    void removeFavorite(Long favoriteId);
+    FavoriteProductResponseDTO getFavoriteById(Long favoriteId);
+    boolean isProductFavoritedByUser(Long userId, Long productId);
 }
