@@ -1,6 +1,9 @@
 package com.clothashe.clotashe_backend.service.order.impl;
 
-import com.clothashe.clotashe_backend.exception.ResourceNotFoundException;
+import com.clothashe.clotashe_backend.exception.order.CartItemNotFoundException;
+import com.clothashe.clotashe_backend.exception.order.CartNotFoundException;
+import com.clothashe.clotashe_backend.exception.products.ProductNotFoundException;
+import com.clothashe.clotashe_backend.exception.users.UserAccessDeniedException;
 import com.clothashe.clotashe_backend.mapper.order.CartItemMapper;
 import com.clothashe.clotashe_backend.mapper.order.CartMapper;
 import com.clothashe.clotashe_backend.model.dto.cart.create.CreateCartItemRequestDTO;
@@ -17,7 +20,6 @@ import com.clothashe.clotashe_backend.repository.product.ProductRepository;
 import com.clothashe.clotashe_backend.service.auth.AuthService;
 import com.clothashe.clotashe_backend.service.order.CartService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,6 +53,7 @@ public class CartServiceImpl implements CartService {
                             .build();
                     return cartRepository.save(nuevo);
                 });
+
         return cartMapper.toDto(cart);
     }
 
@@ -70,7 +73,7 @@ public class CartServiceImpl implements CartService {
                 });
 
         ProductEntity product = productRepository.findById(dto.getProductId())
-                .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+                .orElseThrow(() -> new ProductNotFoundException("Product not found with ID: " + dto.getProductId()));
 
         BigDecimal precioUnitario = product.getPrice();
 
@@ -96,21 +99,19 @@ public class CartServiceImpl implements CartService {
         }
     }
 
-
     @Override
     public CartItemResponseDTO updateCartItem(Long cartItemId, UpdateCartItemRequestDTO dto) {
         UserEntity user = authService.getAuthenticatedUser();
 
         CartItemEntity item = cartItemRepository.findById(cartItemId)
-                .orElseThrow(() -> new ResourceNotFoundException("Cart item not found"));
+                .orElseThrow(() -> new CartItemNotFoundException("Cart item not found with ID: " + cartItemId));
 
         if (!item.getCart().getUser().getId().equals(user.getId())) {
-            throw new AccessDeniedException("You cannot modify an item that is not yours.");
+            throw new UserAccessDeniedException("You cannot modify an item that is not yours.");
         }
 
         item.setQuantity(dto.getQuantity());
         CartItemEntity actualizado = cartItemRepository.save(item);
-
         return cartItemMapper.toDto(actualizado);
     }
 
@@ -119,10 +120,10 @@ public class CartServiceImpl implements CartService {
         UserEntity user = authService.getAuthenticatedUser();
 
         CartItemEntity item = cartItemRepository.findById(cartItemId)
-                .orElseThrow(() -> new ResourceNotFoundException("Cart item not found"));
+                .orElseThrow(() -> new CartItemNotFoundException("Cart item not found with ID: " + cartItemId));
 
         if (!item.getCart().getUser().getId().equals(user.getId())) {
-            throw new AccessDeniedException("You cannot delete an item that is not yours.");
+            throw new UserAccessDeniedException("You cannot delete an item that is not yours.");
         }
 
         cartItemRepository.delete(item);
@@ -134,7 +135,7 @@ public class CartServiceImpl implements CartService {
 
         CartEntity cart = cartRepository
                 .findByUserIdAndActiveTrue(user.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Cart not found"));
+                .orElseThrow(() -> new CartNotFoundException("Cart not found for user ID: " + user.getId()));
 
         cart.getItems().clear();
         cartRepository.save(cart);
@@ -147,7 +148,7 @@ public class CartServiceImpl implements CartService {
 
         CartEntity cart = cartRepository
                 .findByUserIdAndActiveTrue(user.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Cart not found"));
+                .orElseThrow(() -> new CartNotFoundException("Cart not found for user ID: " + user.getId()));
 
         return cart.getItems().stream()
                 .map(item -> item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())))

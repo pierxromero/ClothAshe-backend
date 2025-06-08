@@ -1,5 +1,7 @@
 package com.clothashe.clotashe_backend.service.misc.impl;
 
+import com.clothashe.clotashe_backend.exception.misc.ProductCommentAlreadyExistsException;
+import com.clothashe.clotashe_backend.exception.users.UserAccessDeniedException;
 import com.clothashe.clotashe_backend.mapper.misc.ProductCommentMapper;
 import com.clothashe.clotashe_backend.model.dto.review.create.CreateProductCommentRequestDTO;
 import com.clothashe.clotashe_backend.model.dto.review.response.ProductCommentResponseDTO;
@@ -8,14 +10,12 @@ import com.clothashe.clotashe_backend.model.entity.product.ProductEntity;
 import com.clothashe.clotashe_backend.model.entity.review.ProductCommentEntity;
 import com.clothashe.clotashe_backend.model.entity.user.UserEntity;
 import com.clothashe.clotashe_backend.model.enums.Role;
-import com.clothashe.clotashe_backend.repository.auth.UserRepository;
 import com.clothashe.clotashe_backend.repository.misc.ProductCommentRepository;
 import com.clothashe.clotashe_backend.repository.product.ProductRepository;
 import com.clothashe.clotashe_backend.service.auth.AuthService;
 import com.clothashe.clotashe_backend.service.misc.ProductCommentService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,9 +30,9 @@ public class ProductCommentServiceImpl implements ProductCommentService {
     private final ProductCommentMapper commentMapper;
     private final AuthService authService;
     private final ProductRepository productRepository;
-    private final UserRepository userRepository;
 
     @Override
+    @Transactional
     public ProductCommentResponseDTO createComment(CreateProductCommentRequestDTO dto) {
         ProductEntity product = productRepository.findById(dto.getProductId())
                 .orElseThrow(() -> new EntityNotFoundException("Product not found with ID: " + dto.getProductId()));
@@ -41,7 +41,7 @@ public class ProductCommentServiceImpl implements ProductCommentService {
 
         boolean alreadyCommented = commentRepository.existsByUserIdAndProductId(user.getId(), product.getId());
         if (alreadyCommented) {
-            throw new IllegalArgumentException("You have already commented on this product.");
+            throw new ProductCommentAlreadyExistsException("You have already commented on this product.");
         }
 
         ProductCommentEntity comment = commentMapper.fromCreateDTO(dto);
@@ -52,6 +52,7 @@ public class ProductCommentServiceImpl implements ProductCommentService {
     }
 
     @Override
+    @Transactional
     public ProductCommentResponseDTO updateOwnComment(Long commentId, UpdateProductCommentRequestDTO dto) {
         ProductCommentEntity comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new EntityNotFoundException("Comment not found with ID: " + commentId));
@@ -59,7 +60,7 @@ public class ProductCommentServiceImpl implements ProductCommentService {
         UserEntity user = authService.getAuthenticatedUser();
 
         if (!comment.getUser().getId().equals(user.getId())) {
-            throw new AccessDeniedException("You are not authorized to update this comment.");
+            throw new UserAccessDeniedException("You are not authorized to update this comment.");
         }
 
         commentMapper.updateEntityFromDTO(dto, comment);
@@ -67,20 +68,21 @@ public class ProductCommentServiceImpl implements ProductCommentService {
     }
 
     @Override
+    @Transactional
     public void deleteComment(Long commentId) {
         UserEntity user = authService.getAuthenticatedUser();
         ProductCommentEntity comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new EntityNotFoundException("Comment not found with ID: " + commentId));
 
         if (!comment.getUser().getId().equals(user.getId())) {
-            throw new AccessDeniedException("You are not authorized to delete this comment.");
+            throw new UserAccessDeniedException("You are not authorized to delete this comment.");
         }
 
         commentRepository.delete(comment);
     }
 
-    @Transactional(readOnly = true)
     @Override
+    @Transactional(readOnly = true)
     public List<ProductCommentResponseDTO> getCommentsByUser(Long userId) {
         return commentRepository.findByUserId(userId)
                 .stream()
@@ -88,18 +90,18 @@ public class ProductCommentServiceImpl implements ProductCommentService {
                 .collect(Collectors.toList());
     }
 
-    @Transactional(readOnly = true)
     @Override
+    @Transactional(readOnly = true)
     public List<ProductCommentResponseDTO> getMyComments() {
         UserEntity currentUser = authService.getAuthenticatedUser();
-
         return commentRepository.findByUserId(currentUser.getId())
                 .stream()
                 .map(commentMapper::toResponseDTO)
                 .collect(Collectors.toList());
     }
-    @Transactional(readOnly = true)
+
     @Override
+    @Transactional(readOnly = true)
     public List<ProductCommentResponseDTO> getCommentsByProduct(Long productId) {
         return commentRepository.findByProductId(productId)
                 .stream()
@@ -107,11 +109,11 @@ public class ProductCommentServiceImpl implements ProductCommentService {
                 .collect(Collectors.toList());
     }
 
-    @Transactional(readOnly = true)
     @Override
+    @Transactional(readOnly = true)
     public List<ProductCommentResponseDTO> getAllComments() {
         if (!authService.getAuthenticatedUser().getRole().equals(Role.ADMIN)) {
-            throw new AccessDeniedException("Only admins can access this");
+            throw new UserAccessDeniedException("Only admins can access all comments.");
         }
         return commentRepository.findAll()
                 .stream()
@@ -119,15 +121,14 @@ public class ProductCommentServiceImpl implements ProductCommentService {
                 .collect(Collectors.toList());
     }
 
-    @Transactional(readOnly = true)
     @Override
+    @Transactional(readOnly = true)
     public ProductCommentResponseDTO getCommentById(Long commentId) {
         if (!authService.getAuthenticatedUser().getRole().equals(Role.ADMIN)) {
-            throw new AccessDeniedException("Only admins can access this");
+            throw new UserAccessDeniedException("Only admins can access this comment.");
         }
         ProductCommentEntity comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new EntityNotFoundException("Comment not found with ID: " + commentId));
         return commentMapper.toResponseDTO(comment);
     }
-
 }

@@ -1,6 +1,7 @@
 package com.clothashe.clotashe_backend.service.order.impl;
 
-import com.clothashe.clotashe_backend.exception.ResourceNotFoundException;
+import com.clothashe.clotashe_backend.exception.misc.ResourceNotFoundException;
+import com.clothashe.clotashe_backend.exception.order.*;
 import com.clothashe.clotashe_backend.mapper.order.OrderMapper;
 import com.clothashe.clotashe_backend.mapper.order.PaymentMapper;
 import com.clothashe.clotashe_backend.model.dto.order.create.CreateOrderRequestDTO;
@@ -27,7 +28,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,17 +54,17 @@ public class OrderServiceImpl implements OrderService {
 
         CartEntity cart = cartRepository
                 .findByUserIdAndActiveTrue(user.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Cart not found"));
+                .orElseThrow(() -> new EmptyCartException("Cart not found or empty"));
 
         if (cart.getItems().isEmpty()) {
-            throw new IllegalStateException("Cannot create order with empty cart");
+            throw new EmptyCartException("Cannot create order with empty cart");
         }
 
         AddressEntity address = addressRepository.findById(dto.getShippingAddressId())
                 .orElseThrow(() -> new ResourceNotFoundException("Shipping address not found"));
 
         if (!address.getUser().getId().equals(user.getId())) {
-            throw new AccessDeniedException("No permission to use this address");
+            throw new OrderAccessDeniedException("No permission to use this address");
         }
 
         BigDecimal total = cart.getItems().stream()
@@ -87,10 +87,8 @@ public class OrderServiceImpl implements OrderService {
                             .product(cartItem.getProduct())
                             .quantity(cartItem.getQuantity())
                             .unitPrice(cartItem.getUnitPrice())
-                            .subtotal(
-                                    cartItem.getUnitPrice()
-                                            .multiply(BigDecimal.valueOf(cartItem.getQuantity()))
-                            )
+                            .subtotal(cartItem.getUnitPrice()
+                                    .multiply(BigDecimal.valueOf(cartItem.getQuantity())))
                             .build();
                     return oItem;
                 })
@@ -111,18 +109,18 @@ public class OrderServiceImpl implements OrderService {
         UserEntity user = authService.getAuthenticatedUser();
 
         OrderEntity order = orderRepository.findById(dto.getOrderId())
-                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+                .orElseThrow(() -> new OrderNotFoundException("Order not found"));
 
         if (!order.getUser().getId().equals(user.getId())) {
-            throw new AccessDeniedException("No permission to pay this order");
+            throw new OrderAccessDeniedException("No permission to pay this order");
         }
 
         if (!order.getStatus().equals(OrderStatus.PENDING)) {
-            throw new IllegalStateException("Only orders in PENDING state can be paid");
+            throw new PaymentNotAllowedException("Only orders in PENDING state can be paid");
         }
 
         if (dto.getAmount().compareTo(order.getTotalAmount()) != 0) {
-            throw new IllegalArgumentException("Payment amount must match order total");
+            throw new InvalidPaymentAmountException("Payment amount must match order total");
         }
 
         PaymentEntity payment = PaymentEntity.builder()
@@ -158,16 +156,16 @@ public class OrderServiceImpl implements OrderService {
         UserEntity user = authService.getAuthenticatedUser();
 
         OrderEntity order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+                .orElseThrow(() -> new OrderNotFoundException("Order not found"));
 
         if (!order.getUser().getId().equals(user.getId()) && !user.getRole().equals(Role.ADMIN)) {
-            throw new AccessDeniedException("No permission to view this order");
+            throw new OrderAccessDeniedException("No permission to view this order");
         }
 
         return orderMapper.toDto(order);
     }
 
-    //Only admin
+    // Only admin
 
     @Override
     @Transactional(readOnly = true)
@@ -193,11 +191,11 @@ public class OrderServiceImpl implements OrderService {
         UserEntity user = authService.getAuthenticatedUser();
 
         if (!user.getRole().equals(Role.ADMIN)) {
-            throw new AccessDeniedException("Only admin can update order status");
+            throw new OrderAccessDeniedException("Only admin can update order status");
         }
 
         OrderEntity order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+                .orElseThrow(() -> new OrderNotFoundException("Order not found"));
 
         order.setStatus(newStatus);
         OrderEntity updated = orderRepository.save(order);
@@ -210,17 +208,17 @@ public class OrderServiceImpl implements OrderService {
         UserEntity user = authService.getAuthenticatedUser();
 
         OrderEntity order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+                .orElseThrow(() -> new OrderNotFoundException("Order not found"));
 
         boolean isOwner = order.getUser().getId().equals(user.getId());
         boolean isAdmin = user.getRole().equals(Role.ADMIN);
 
         if (!isOwner && !isAdmin) {
-            throw new AccessDeniedException("No permission to cancel this order");
+            throw new OrderAccessDeniedException("No permission to cancel this order");
         }
 
         if (!order.getStatus().equals(OrderStatus.PENDING)) {
-            throw new IllegalStateException("Only PENDING orders can be cancelled");
+            throw new OrderStatusUpdateNotAllowedException("Only PENDING orders can be cancelled");
         }
 
         order.setStatus(OrderStatus.CANCELLED);
@@ -233,14 +231,14 @@ public class OrderServiceImpl implements OrderService {
         UserEntity user = authService.getAuthenticatedUser();
 
         OrderEntity order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+                .orElseThrow(() -> new OrderNotFoundException("Order not found"));
 
         if (!order.getUser().getId().equals(user.getId())) {
-            throw new AccessDeniedException("You can only return your own orders");
+            throw new OrderAccessDeniedException("You can only return your own orders");
         }
 
         if (!order.getStatus().equals(OrderStatus.DELIVERED)) {
-            throw new IllegalStateException("Only delivered orders can be returned");
+            throw new OrderStatusUpdateNotAllowedException("Only delivered orders can be returned");
         }
 
         order.setStatus(OrderStatus.RETURNED);

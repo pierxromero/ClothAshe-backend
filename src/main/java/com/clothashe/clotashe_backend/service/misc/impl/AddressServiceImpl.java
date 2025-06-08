@@ -1,6 +1,7 @@
 package com.clothashe.clotashe_backend.service.misc.impl;
 
-import com.clothashe.clotashe_backend.exception.ResourceNotFoundException;
+import com.clothashe.clotashe_backend.exception.misc.AddressNotFoundException;
+import com.clothashe.clotashe_backend.exception.users.UserAccessDeniedException;
 import com.clothashe.clotashe_backend.mapper.misc.AddressMapper;
 import com.clothashe.clotashe_backend.model.dto.user.create.CreateAddressRequestDTO;
 import com.clothashe.clotashe_backend.model.dto.user.response.AddressResponseDTO;
@@ -12,7 +13,6 @@ import com.clothashe.clotashe_backend.repository.misc.AddressRepository;
 import com.clothashe.clotashe_backend.service.auth.AuthService;
 import com.clothashe.clotashe_backend.service.misc.AddressService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,10 +41,10 @@ public class AddressServiceImpl implements AddressService {
     public void deleteAddress(Long addressId) {
         UserEntity user = authService.getAuthenticatedUser();
         AddressEntity address = addressRepository.findById(addressId)
-                .orElseThrow(() -> new ResourceNotFoundException("Address not found"));
+                .orElseThrow(() -> new AddressNotFoundException("Address not found"));
 
         if (!address.getUser().getId().equals(user.getId()) && !user.getRole().equals(Role.ADMIN)) {
-            throw new AccessDeniedException("You are not allowed to delete this address");
+            throw new UserAccessDeniedException("You are not allowed to delete this address");
         }
 
         addressRepository.delete(address);
@@ -54,10 +54,10 @@ public class AddressServiceImpl implements AddressService {
     public AddressResponseDTO updateAddress(Long addressId, UpdateAddressRequestDTO updateDTO) {
         UserEntity user = authService.getAuthenticatedUser();
         AddressEntity address = addressRepository.findById(addressId)
-                .orElseThrow(() -> new ResourceNotFoundException("Address not found"));
+                .orElseThrow(() -> new AddressNotFoundException("Address not found"));
 
         if (!address.getUser().getId().equals(user.getId())) {
-            throw new AccessDeniedException("You are not allowed to update this address");
+            throw new UserAccessDeniedException("You are not allowed to update this address");
         }
 
         addressMapper.updateEntityFromDTO(updateDTO, address);
@@ -68,10 +68,10 @@ public class AddressServiceImpl implements AddressService {
     public AddressResponseDTO getAddressById(Long addressId) {
         UserEntity user = authService.getAuthenticatedUser();
         AddressEntity address = addressRepository.findById(addressId)
-                .orElseThrow(() -> new ResourceNotFoundException("Address not found"));
+                .orElseThrow(() -> new AddressNotFoundException("Address not found"));
 
         if (!address.getUser().getId().equals(user.getId()) && !user.getRole().equals(Role.ADMIN)) {
-            throw new AccessDeniedException("You are not allowed to access this address");
+            throw new UserAccessDeniedException("You are not allowed to access this address");
         }
 
         return addressMapper.toDto(address);
@@ -88,7 +88,7 @@ public class AddressServiceImpl implements AddressService {
     public List<AddressResponseDTO> getAllAddressesByUserId(Long targetUserId) {
         UserEntity requester = authService.getAuthenticatedUser();
         if (!requester.getRole().equals(Role.ADMIN)) {
-            throw new AccessDeniedException("Only admins can access other users' addresses");
+            throw new UserAccessDeniedException("Only admins can access other users' addresses");
         }
 
         List<AddressEntity> addresses = addressRepository.findByUserId(targetUserId);
@@ -99,7 +99,7 @@ public class AddressServiceImpl implements AddressService {
     public List<AddressResponseDTO> getAllAddresses() {
         UserEntity requester = authService.getAuthenticatedUser();
         if (!requester.getRole().equals(Role.ADMIN)) {
-            throw new AccessDeniedException("Only admins can access all addresses");
+            throw new UserAccessDeniedException("Only admins can access all addresses");
         }
 
         return addressRepository.findAll()

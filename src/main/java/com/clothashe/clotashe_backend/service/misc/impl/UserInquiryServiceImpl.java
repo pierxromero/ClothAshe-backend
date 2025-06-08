@@ -1,6 +1,8 @@
 package com.clothashe.clotashe_backend.service.misc.impl;
 
-import com.clothashe.clotashe_backend.exception.ResourceNotFoundException;
+import com.clothashe.clotashe_backend.exception.misc.ResourceNotFoundException;
+import com.clothashe.clotashe_backend.exception.misc.InquiryAlreadyAnsweredException;
+import com.clothashe.clotashe_backend.exception.users.UserAccessDeniedException;
 import com.clothashe.clotashe_backend.mapper.misc.UserInquiryMapper;
 import com.clothashe.clotashe_backend.model.dto.user.create.AnswerInquiryRequestDTO;
 import com.clothashe.clotashe_backend.model.dto.user.create.CreateUserInquiryRequestDTO;
@@ -16,7 +18,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -84,8 +85,11 @@ public class UserInquiryServiceImpl implements UserInquiryService {
         UserInquiryEntity inquiry = inquiryRepository.findById(inquiryId)
                 .orElseThrow(() -> new ResourceNotFoundException("Inquiry not found"));
 
-        if (!user.getRole().equals(Role.ADMIN) && !inquiry.getUserInquiry().getId().equals(user.getId())) {
-            throw new AccessDeniedException("No permission to access this inquiry");
+        boolean isAdmin = user.getRole().equals(Role.ADMIN);
+        boolean isOwner = inquiry.getUserInquiry().getId().equals(user.getId());
+
+        if (!isAdmin && !isOwner) {
+            throw new UserAccessDeniedException("No permission to access this inquiry");
         }
 
         return inquiryMapper.toDto(inquiry);
@@ -96,14 +100,14 @@ public class UserInquiryServiceImpl implements UserInquiryService {
         UserEntity adminUser = authService.getAuthenticatedUser();
 
         if (!adminUser.getRole().equals(Role.ADMIN)) {
-            throw new AccessDeniedException("Only admin can answer inquiries");
+            throw new UserAccessDeniedException("Only admin can answer inquiries");
         }
 
         UserInquiryEntity inquiry = inquiryRepository.findById(dto.getInquiryId())
                 .orElseThrow(() -> new ResourceNotFoundException("Inquiry not found"));
 
         if (Boolean.TRUE.equals(inquiry.getAnswered())) {
-            throw new IllegalStateException("Inquiry already answered");
+            throw new InquiryAlreadyAnsweredException("Inquiry already answered");
         }
 
         inquiry.setAnswered(true);
@@ -126,7 +130,7 @@ public class UserInquiryServiceImpl implements UserInquiryService {
         boolean isOwner = inquiry.getUserInquiry().getId().equals(currentUser.getId());
 
         if (!isAdmin && !isOwner) {
-            throw new AccessDeniedException("You can only delete your own inquiries");
+            throw new UserAccessDeniedException("You can only delete your own inquiries");
         }
 
         inquiryRepository.deleteById(inquiryId);

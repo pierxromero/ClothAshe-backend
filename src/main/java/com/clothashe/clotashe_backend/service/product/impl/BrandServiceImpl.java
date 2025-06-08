@@ -1,7 +1,7 @@
 package com.clothashe.clotashe_backend.service.product.impl;
 
-import com.clothashe.clotashe_backend.exception.ResourceAlreadyExistsException;
-import com.clothashe.clotashe_backend.exception.ResourceNotFoundException;
+import com.clothashe.clotashe_backend.exception.products.BrandAlreadyExistsException;
+import com.clothashe.clotashe_backend.exception.products.BrandNotFoundException;
 import com.clothashe.clotashe_backend.mapper.product.BrandMapper;
 import com.clothashe.clotashe_backend.model.dto.product.create.CreateBrandRequestDTO;
 import com.clothashe.clotashe_backend.model.dto.product.response.BrandResponseDTO;
@@ -27,7 +27,7 @@ public class BrandServiceImpl implements BrandService {
     @Transactional
     public BrandResponseDTO create(CreateBrandRequestDTO dto) {
         if (brandRepository.existsByNameIgnoreCase(dto.getName())) {
-            throw new ResourceAlreadyExistsException("Ya existe una marca con el nombre: " + dto.getName());
+            throw new BrandAlreadyExistsException("Already exists a brand with the name: " + dto.getName());
         }
         BrandEntity entity = brandMapper.toEntity(dto);
         BrandEntity saved = brandRepository.save(entity);
@@ -38,7 +38,7 @@ public class BrandServiceImpl implements BrandService {
     @Transactional
     public BrandResponseDTO update(Long id, UpdateBrandRequestDTO dto) {
         BrandEntity existing = brandRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Brand not found with id: " + id));
+                .orElseThrow(() -> new BrandNotFoundException("Brand not found with id: " + id));
 
         brandMapper.updateEntityFromDto(dto, existing);
         BrandEntity updated = brandRepository.save(existing);
@@ -50,7 +50,7 @@ public class BrandServiceImpl implements BrandService {
     @Transactional(readOnly = true)
     public BrandResponseDTO findById(Long id) {
         BrandEntity entity = brandRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Brand not found with id: " + id));
+                .orElseThrow(() -> new BrandNotFoundException("Brand not found with id: " + id));
         return brandMapper.toDto(entity);
     }
 
@@ -67,7 +67,7 @@ public class BrandServiceImpl implements BrandService {
     @Transactional
     public void delete(Long id) {
         if (!brandRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Brand not found with id: " + id);
+            throw new BrandNotFoundException("Brand not found with id: " + id);
         }
         brandRepository.deleteById(id);
     }

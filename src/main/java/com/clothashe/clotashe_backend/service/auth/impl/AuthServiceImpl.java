@@ -1,5 +1,9 @@
 package com.clothashe.clotashe_backend.service.auth.impl;
 
+import com.clothashe.clotashe_backend.exception.users.EmailAlreadyExistsException;
+import com.clothashe.clotashe_backend.exception.users.PhoneAlreadyExistsException;
+import com.clothashe.clotashe_backend.exception.users.UserAccessDeniedException;
+import com.clothashe.clotashe_backend.exception.users.UserNotFoundException;
 import com.clothashe.clotashe_backend.mapper.auth.UserMapper;
 import com.clothashe.clotashe_backend.model.dto.auth.LoginRequest;
 import com.clothashe.clotashe_backend.model.dto.user.create.CreateUserRequestDTO;
@@ -13,12 +17,10 @@ import com.clothashe.clotashe_backend.model.entity.user.UserEntity;
 import com.clothashe.clotashe_backend.repository.auth.AuthInfoRepository;
 import com.clothashe.clotashe_backend.service.auth.AuthService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -51,7 +53,7 @@ public class AuthServiceImpl implements AuthService {
     public String register(RegisterRequest request) {
 
         if (authInfoRepository.findByEmail(request.getEmail()).isPresent()) {
-            throw new IllegalArgumentException("Username already exists");
+            throw new EmailAlreadyExistsException(request.getEmail());
         }
 
         CreateUserRequestDTO userDto = CreateUserRequestDTO.builder()
@@ -82,13 +84,13 @@ public class AuthServiceImpl implements AuthService {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null || !authentication.isAuthenticated()) {
-            throw new AccessDeniedException("No authenticated user found.");
+            throw new UserAccessDeniedException("No authenticated user found.");
         }
 
         String email = authentication.getName();
 
         AuthInfoEntity authInfo = authInfoRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
+                .orElseThrow(() -> new UserNotFoundException(email));
 
         return authInfo.getUser();
     }
@@ -96,11 +98,11 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public UserEntity createUser(CreateUserRequestDTO dto) {
         if (userRepository.existsByEmail(dto.getEmail())) {
-            throw new IllegalArgumentException("Email already exists");
+            throw new EmailAlreadyExistsException(dto.getEmail());
         }
 
         if (userRepository.existsByNumberPhone(dto.getNumberPhone())) {
-            throw new IllegalArgumentException("Phone number already exists");
+            throw new PhoneAlreadyExistsException(dto.getNumberPhone());
         }
 
         UserEntity user = userMapper.toEntity(dto);

@@ -1,4 +1,4 @@
-package com.clothashe.clotashe_backend.exception;
+package com.clothashe.clotashe_backend.exception.misc;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;

@@ -1,5 +1,7 @@
 package com.clothashe.clotashe_backend.service.misc.impl;
 
+import com.clothashe.clotashe_backend.exception.misc.FavoriteAlreadyExistsException;
+import com.clothashe.clotashe_backend.exception.users.UserAccessDeniedException;
 import com.clothashe.clotashe_backend.mapper.misc.FavoriteProductMapper;
 import com.clothashe.clotashe_backend.model.dto.user.create.CreateFavoriteProductRequestDTO;
 import com.clothashe.clotashe_backend.model.dto.user.response.FavoriteProductResponseDTO;
@@ -13,13 +15,13 @@ import com.clothashe.clotashe_backend.service.auth.AuthService;
 import com.clothashe.clotashe_backend.service.misc.FavoriteProductService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 public class FavoriteProductServiceImpl implements FavoriteProductService {
@@ -38,7 +40,7 @@ public class FavoriteProductServiceImpl implements FavoriteProductService {
                 .orElseThrow(() -> new EntityNotFoundException("Product not found with ID: " + dto.getProductId()));
 
         if (isProductFavoritedByUser(user.getId(), product.getId())) {
-            throw new IllegalArgumentException("Product is already in favorites");
+            throw new FavoriteAlreadyExistsException("Product is already in favorites");
         }
 
         FavoriteProductEntity favorite = FavoriteProductEntity.builder()
@@ -70,8 +72,9 @@ public class FavoriteProductServiceImpl implements FavoriteProductService {
         UserEntity requester = authService.getAuthenticatedUser();
 
         if (!requester.getRole().equals(Role.ADMIN)) {
-            throw new AccessDeniedException("Only admins can access other users' favorites");
+            throw new UserAccessDeniedException("Only admins can access other users' favorites");
         }
+
         List<FavoriteProductEntity> favorites = favoriteProductRepository.findByUserId(userId);
 
         return favorites.stream()
@@ -88,7 +91,7 @@ public class FavoriteProductServiceImpl implements FavoriteProductService {
         UserEntity user = authService.getAuthenticatedUser();
 
         if (!favorite.getUser().getId().equals(user.getId())) {
-            throw new AccessDeniedException("You are not authorized to delete this favorite");
+            throw new UserAccessDeniedException("You are not authorized to delete this favorite");
         }
 
         favoriteProductRepository.delete(favorite);
@@ -103,7 +106,7 @@ public class FavoriteProductServiceImpl implements FavoriteProductService {
         UserEntity user = authService.getAuthenticatedUser();
 
         if (!favorite.getUser().getId().equals(user.getId())) {
-            throw new AccessDeniedException("You are not authorized to view this favorite");
+            throw new UserAccessDeniedException("You are not authorized to view this favorite");
         }
 
         return favoriteProductMapper.toDto(favorite);

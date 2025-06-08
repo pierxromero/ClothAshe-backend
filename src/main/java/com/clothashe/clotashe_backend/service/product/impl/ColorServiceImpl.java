@@ -1,7 +1,7 @@
 package com.clothashe.clotashe_backend.service.product.impl;
 
-import com.clothashe.clotashe_backend.exception.ResourceAlreadyExistsException;
-import com.clothashe.clotashe_backend.exception.ResourceNotFoundException;
+import com.clothashe.clotashe_backend.exception.products.ColorAlreadyExistsException;
+import com.clothashe.clotashe_backend.exception.products.ColorNotFoundException;
 import com.clothashe.clotashe_backend.mapper.product.ColorMapper;
 import com.clothashe.clotashe_backend.model.dto.product.create.CreateColorRequestDTO;
 import com.clothashe.clotashe_backend.model.dto.product.response.ColorResponseDTO;
@@ -26,7 +26,7 @@ public class ColorServiceImpl implements ColorService {
     @Transactional
     public ColorResponseDTO create(CreateColorRequestDTO dto) {
         if (colorRepository.existsByNameIgnoreCase(dto.getName())) {
-            throw new ResourceAlreadyExistsException("Ya existe un color con el nombre: " + dto.getName());
+            throw new ColorAlreadyExistsException("A color with the name '" + dto.getName() + "' already exists: ");
         }
 
         ColorEntity entity = colorMapper.toEntity(dto);
@@ -38,7 +38,7 @@ public class ColorServiceImpl implements ColorService {
     @Transactional
     public ColorResponseDTO update(Long id, UpdateColorRequestDTO dto) {
         ColorEntity existing = colorRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Color not found with id: " + id));
+                .orElseThrow(() -> new ColorAlreadyExistsException("Color not found with id: " + id));
 
         colorMapper.updateEntityFromDto(dto, existing);
         ColorEntity updated = colorRepository.save(existing);
@@ -50,7 +50,7 @@ public class ColorServiceImpl implements ColorService {
     @Transactional(readOnly = true)
     public ColorResponseDTO findById(Long id) {
         ColorEntity entity = colorRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Color not found with id: " + id));
+                .orElseThrow(() -> new ColorNotFoundException("Color not found with id: " + id));
         return colorMapper.toDto(entity);
     }
 
@@ -67,7 +67,7 @@ public class ColorServiceImpl implements ColorService {
     @Transactional
     public void delete(Long id) {
         if (!colorRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Color not found with id: " + id);
+            throw new ColorNotFoundException("Color not found with id: " + id);
         }
         colorRepository.deleteById(id);
     }

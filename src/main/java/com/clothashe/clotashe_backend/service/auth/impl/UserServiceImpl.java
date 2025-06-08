@@ -1,6 +1,7 @@
 package com.clothashe.clotashe_backend.service.auth.impl;
 
-import com.clothashe.clotashe_backend.exception.BadRequestException;
+import com.clothashe.clotashe_backend.exception.users.EmailAlreadyExistsException;
+import com.clothashe.clotashe_backend.exception.users.*;
 import com.clothashe.clotashe_backend.model.dto.auth.UserWithAuthInfoDTO;
 import com.clothashe.clotashe_backend.model.dto.user.response.UserDTO;
 import com.clothashe.clotashe_backend.model.dto.user.update.ChangePasswordDTO;
@@ -16,9 +17,7 @@ import com.clothashe.clotashe_backend.service.auth.UserService;
 import com.clothashe.clotashe_backend.mapper.auth.UserMapper;
 import com.clothashe.clotashe_backend.model.entity.user.UserEntity;
 
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,14 +37,11 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final AuthService authService;
 
-
-    // --------------------------------------------------
-
     @Override
     @Transactional(readOnly = true)
     public UserDTO getById(Long id) {
         UserEntity user = userRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + id));
+                .orElseThrow(() -> new UserNotFoundException(id));
         return userMapper.toUserDTO(user);
     }
 
@@ -60,7 +56,7 @@ public class UserServiceImpl implements UserService {
     @Transactional(readOnly = true)
     public UserDTO getByEmail(String email) {
         UserEntity user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new EntityNotFoundException("User not found with email: " + email));
+                .orElseThrow(() -> new UserNotFoundException(email));
         return userMapper.toUserDTO(user);
     }
 
@@ -81,16 +77,14 @@ public class UserServiceImpl implements UserService {
         return userMapper.toUserDTO(me);
     }
 
-    // —— MUTACIÓN ————————————————————————————————————
-
     @Override
     @Transactional
     public void deleteById(Long id) {
         UserEntity targetUser = userRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + id));
+                .orElseThrow(() -> new UserNotFoundException(id));
 
         if (targetUser.getRole() == Role.OWNER) {
-            throw new AccessDeniedException("Cannot delete a user with OWNER role.");
+            throw new UserAccessDeniedException("Cannot delete a user with OWNER role.");
         }
 
         userRepository.deleteById(id);
@@ -101,12 +95,12 @@ public class UserServiceImpl implements UserService {
     public UserDTO changeUserRole(Long id, RoleChangeDTO dto) {
         UserEntity currentUser = authService.getAuthenticatedUser();
         if (currentUser.getRole() != Role.OWNER) {
-            throw new AccessDeniedException("Only OWNER can change user roles.");
+            throw new UserAccessDeniedException("Only OWNER can change user roles.");
         }
         UserEntity targetUser = userRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + id));
+                .orElseThrow(() -> new UserNotFoundException(id));
         if (targetUser.getRole() == Role.OWNER && !targetUser.getId().equals(currentUser.getId())) {
-            throw new AccessDeniedException("Cannot change the role of another OWNER.");
+            throw new UserAccessDeniedException("Cannot change the role of another OWNER.");
         }
         targetUser.setRole(dto.getNewRole());
         targetUser = userRepository.save(targetUser);
@@ -118,7 +112,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public UserWithAuthInfoDTO lockUnlockUser(Long id, LockUnlockDTO dto) {
         AuthInfoEntity auth = authInfoRepository.findByUserId(id)
-                .orElseThrow(() -> new EntityNotFoundException("AuthInfo not found for user id " + id));
+                .orElseThrow(() -> new AuthInfoNotFoundException(id));
 
         auth.setIsLocked(dto.getLock());
         authInfoRepository.save(auth);
@@ -133,17 +127,13 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public UserDTO updateProfile(UpdateUserDTO dto){
+    public UserDTO updateProfile(UpdateUserDTO dto) {
         UserEntity user = authService.getAuthenticatedUser();
         if (userRepository.existsByEmailAndIdNot(dto.getEmail(), user.getId())) {
-            throw new BadRequestException(
-                    String.format("The email '%s' already exists", dto.getEmail())
-            );
+            throw new EmailAlreadyExistsException(dto.getEmail());
         }
         if (userRepository.existsByNumberPhoneAndIdNot(dto.getNumberPhone(), user.getId())) {
-            throw new BadRequestException(
-                    String.format("The phone number '%s' already exists", dto.getNumberPhone())
-            );
+            throw new PhoneAlreadyExistsException(dto.getNumberPhone());
         }
         userMapper.updateFromDto(dto, user);
         user = userRepository.save(user);
@@ -152,16 +142,17 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public void changePassword(ChangePasswordDTO dto){
+    public void changePassword(ChangePasswordDTO dto) {
         UserEntity user = authService.getAuthenticatedUser();
         AuthInfoEntity auth = authInfoRepository
                 .findByUserId(user.getId())
-                .orElseThrow(() -> new EntityNotFoundException("AuthInfo not found for user id " + user.getId()));
+                .orElseThrow(() -> new AuthInfoNotFoundException(user.getId()));
+
         if (dto.getNewPassword().equals(dto.getCurrentPassword())) {
-            throw new BadRequestException("The new password cannot be the same as the current password");
+            throw new PasswordValidationException("The new password cannot be the same as the current password");
         }
         if (!passwordEncoder.matches(dto.getCurrentPassword(), auth.getPasswordHash())) {
-            throw new BadRequestException("Current password is incorrect");
+            throw new PasswordValidationException("Current password is incorrect");
         }
         auth.setPasswordHash(passwordEncoder.encode(dto.getNewPassword()));
         authInfoRepository.save(auth);
