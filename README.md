@@ -1,8 +1,19 @@
-# ClothAshe-backend
+# ClothAshe Backend — Extended Functionality Branch
 
-Added a configuration class to allow requests from Postman, as they were initially blocked.  
-Implemented the `ProductController` with basic CRUD operations for product management via API.  
-Introduced a `GlobalExceptionHandler` that currently handles basic exceptions for improved error management.  
-Renamed the enum `AdminRole` to `Role` and added a new value `CLIENT`, which is present in both the `Admin` and `User` entities.  
+This branch introduces a significant expansion of the backend logic and architecture for the **ClothAshe** online clothing store system.
 
-Most importantly, a bug was discovered and fixed in the MapStruct mapping caused by a misconfiguration in the `pom.xml`, where Lombok plugins were declared separately, preventing proper conversion.
+## 🆕 Key Updates
+
+- **Full Controller Layer Implemented**  
+  All necessary REST controllers were created, enabling interaction with the core entities of the system (products, users, orders, etc.).
+
+- **Extended Service Layer Logic**  
+  New service methods were added to support enhanced business logic and system functionalities beyond basic CRUD operations.
+
+- **New Role: `OWNER`**  
+  A new `OWNER` role was introduced with the following characteristics:
+  - Has full access to the system.
+  - Can assign and manage other users’ roles.
+  - Is immutable — its privileges cannot be changed by other roles.
+  - Introduces a clear **hierarchy**:  
+    `OWNER → ADMIN → CLIENT`.
