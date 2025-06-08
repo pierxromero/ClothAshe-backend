@@ -8,13 +8,10 @@ import com.clothashe.clotashe_backend.model.dto.user.update.UpdateAddressRequest
 import com.clothashe.clotashe_backend.model.entity.user.AddressEntity;
 import com.clothashe.clotashe_backend.model.entity.user.UserEntity;
 import com.clothashe.clotashe_backend.model.enums.Role;
-import com.clothashe.clotashe_backend.repository.auth.UserRepository;
 import com.clothashe.clotashe_backend.repository.misc.AddressRepository;
-import com.clothashe.clotashe_backend.service.auth.impl.AuthService;
+import com.clothashe.clotashe_backend.service.auth.AuthService;
 import com.clothashe.clotashe_backend.service.misc.AddressService;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.apache.coyote.BadRequestException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

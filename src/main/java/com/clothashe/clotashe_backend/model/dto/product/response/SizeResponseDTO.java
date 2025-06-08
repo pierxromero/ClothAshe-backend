@@ -2,7 +2,6 @@ package com.clothashe.clotashe_backend.model.dto.product.response;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
-import java.time.LocalDateTime;
 @Getter
 @Setter
 @NoArgsConstructor

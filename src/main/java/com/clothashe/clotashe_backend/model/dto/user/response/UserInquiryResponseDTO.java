@@ -43,9 +43,9 @@ public class UserInquiryResponseDTO {
     @Schema(description = "User who submitted the inquiry.", required = true)
     @NotNull(message = "User information must not be null")
     @Valid
-    private UserDTO userInquiry;
+    private UserResponseDTO userInquiry;
 
     @Schema(description = "User who answered the inquiry, if applicable.")
     @Valid
-    private UserDTO answeredBy;
+    private UserResponseDTO answeredBy;
 }

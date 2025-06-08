@@ -11,7 +11,7 @@ import com.clothashe.clotashe_backend.model.enums.Role;
 import com.clothashe.clotashe_backend.repository.auth.UserRepository;
 import com.clothashe.clotashe_backend.repository.misc.ProductCommentRepository;
 import com.clothashe.clotashe_backend.repository.product.ProductRepository;
-import com.clothashe.clotashe_backend.service.auth.impl.AuthService;
+import com.clothashe.clotashe_backend.service.auth.AuthService;
 import com.clothashe.clotashe_backend.service.misc.ProductCommentService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;

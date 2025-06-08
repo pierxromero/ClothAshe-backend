@@ -8,11 +8,7 @@ import org.springframework.data.domain.Page;
 import java.util.List;
 
 public interface UserInquiryService {
-    /**
-     * Crear una nueva consulta para el usuario autenticado.
-     * @param dto DTO con el mensaje de la consulta.
-     * @return DTO con la consulta creada.
-     */
+
     UserInquiryResponseDTO createInquiry(CreateUserInquiryRequestDTO dto);
 
     Page<UserInquiryResponseDTO> listAllInquiries(Boolean answered, Long userId, int page, int size);

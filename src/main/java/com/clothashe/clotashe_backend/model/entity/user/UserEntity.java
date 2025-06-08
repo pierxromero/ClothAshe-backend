@@ -8,7 +8,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
-import java.time.LocalDateTime;
+
 import java.util.List;
 
 @Entity
@@ -43,9 +43,6 @@ public class UserEntity {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<FavoriteProductEntity> favorites;
-
-    @Column(name = "last_login")
-    private LocalDateTime lastLoginDate;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<AddressEntity> addresses;

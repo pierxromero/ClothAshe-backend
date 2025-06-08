@@ -1,132 +1,87 @@
 package com.clothashe.clotashe_backend.controller.product;
-import com.clothashe.clotashe_backend.service.product.impl.ProductServiceImpl;
-import io.swagger.v3.oas.annotations.tags.Tag;
+import com.clothashe.clotashe_backend.model.dto.product.create.CreateProductRequestDTO;
+import com.clothashe.clotashe_backend.model.dto.product.response.ProductResponseDTO;
+import com.clothashe.clotashe_backend.model.dto.product.update.UpdateProductRequestDTO;
+import com.clothashe.clotashe_backend.service.product.ProductService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/products")
 @RequiredArgsConstructor
-@Tag(name = "Products", description = "CRUD operations for managing products")
+@Validated
 public class ProductController {
 
-    private final ProductServiceImpl productService;
+    private final ProductService productService;
+
+    @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ProductResponseDTO> create(
+            @Valid @RequestBody CreateProductRequestDTO dto) {
+        ProductResponseDTO created = productService.create(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<ProductResponseDTO>> findAll() {
+        List<ProductResponseDTO> list = productService.findAll();
+        return ResponseEntity.ok(list);
+    }
 
 
+    @GetMapping("/{id}")
+    public ResponseEntity<ProductResponseDTO> findById(
+            @PathVariable Long id) {
+        ProductResponseDTO dto = productService.findById(id);
+        return ResponseEntity.ok(dto);
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ProductResponseDTO> update(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateProductRequestDTO dto) {
+        ProductResponseDTO updated = productService.update(id, dto);
+        return ResponseEntity.ok(updated);
+    }
 
 
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> delete(
+            @PathVariable Long id) {
+        productService.delete(id);
+        return ResponseEntity.noContent().build();
+    }
 
+    @GetMapping("/by-category/{categoryId}")
+    public ResponseEntity<List<ProductResponseDTO>> getProductsByCategory(@PathVariable Long categoryId) {
+        return ResponseEntity.ok(productService.findByCategoryId(categoryId));
+    }
 
+    @GetMapping("/by-price")
+    public ResponseEntity<List<ProductResponseDTO>> getProductsByPriceRange(
+            @RequestParam Double minPrice,
+            @RequestParam Double maxPrice) {
+        return ResponseEntity.ok(productService.findByPriceRange(minPrice, maxPrice));
+    }
 
+    @GetMapping("/by-stock")
+    public ResponseEntity<List<ProductResponseDTO>> getProductsByStockAvailability(
+            @RequestParam boolean onlyWithStock) {
+        return ResponseEntity.ok(productService.findByStockAvailability(onlyWithStock));
+    }
 
-
-
-
-//    @Operation(
-//            summary = "Retrieve all products",
-//            description = "Returns a list of all available products."
-//    )
-//    @ApiResponse(
-//            responseCode = "200",
-//            description = "List of products retrieved successfully",
-//            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ProductDTO.class))
-//    )
-//    @GetMapping
-//    public ResponseEntity<List<ProductDTO>> getAllProducts() {
-//        List<ProductDTO> products = productService.getAll();
-//        return ResponseEntity.ok(products);
-//    }
-//
-//    @Operation(
-//            summary = "Retrieve a product by ID",
-//            description = "Returns the product that matches the provided ID."
-//    )
-//    @ApiResponses(value = {
-//            @ApiResponse(
-//                    responseCode = "200",
-//                    description = "Product found",
-//                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ProductDTO.class))
-//            ),
-//            @ApiResponse(
-//                    responseCode = "404",
-//                    description = "Product not found",
-//                    content = @Content
-//            )
-//    })
-//    @GetMapping("/{id}")
-//    public ResponseEntity<ProductDTO> getProductById(@PathVariable Long id) {
-//        ProductDTO product = productService.getById(id);
-//        return ResponseEntity.ok(product);
-//    }
-//
-//    @Operation(
-//            summary = "Create a new product",
-//            description = "Creates a new product using the provided valid product data."
-//    )
-//    @ApiResponses(value = {
-//            @ApiResponse(
-//                    responseCode = "200",
-//                    description = "Product created successfully",
-//                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ProductDTO.class))
-//            ),
-//            @ApiResponse(
-//                    responseCode = "400",
-//                    description = "Invalid input data",
-//                    content = @Content
-//            )
-//    })
-//    @PostMapping
-//    public ResponseEntity<ProductDTO> createProduct(@Valid @RequestBody ProductDTO productDTO) {
-//        ProductDTO createdProduct = productService.create(productDTO);
-//        return ResponseEntity.ok(createdProduct);
-//    }
-//
-//    @Operation(
-//            summary = "Update an existing product",
-//            description = "Updates the product identified by the given ID using the provided data."
-//    )
-//    @ApiResponses(value = {
-//            @ApiResponse(
-//                    responseCode = "200",
-//                    description = "Product updated successfully",
-//                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ProductDTO.class))
-//            ),
-//            @ApiResponse(
-//                    responseCode = "400",
-//                    description = "Invalid input data",
-//                    content = @Content
-//            ),
-//            @ApiResponse(
-//                    responseCode = "404",
-//                    description = "Product not found",
-//                    content = @Content
-//            )
-//    })
-//    @PutMapping("/{id}")
-//    public ResponseEntity<ProductDTO> updateProduct(@PathVariable Long id, @Valid @RequestBody ProductDTO productDTO) {
-//        ProductDTO updatedProduct = productService.update(id, productDTO);
-//        return ResponseEntity.ok(updatedProduct);
-//    }
-//
-//    @Operation(
-//            summary = "Delete a product",
-//            description = "Deletes the product identified by the given ID."
-//    )
-//    @ApiResponses(value = {
-//            @ApiResponse(
-//                    responseCode = "204",
-//                    description = "Product deleted successfully",
-//                    content = @Content
-//            ),
-//            @ApiResponse(
-//                    responseCode = "404",
-//                    description = "Product not found",
-//                    content = @Content
-//            )
-//    })
-//    @DeleteMapping("/{id}")
-//    public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
-//        productService.delete(id);
-//        return ResponseEntity.noContent().build();
-//    }
+    @GetMapping("/top-rated")
+    public ResponseEntity<List<ProductResponseDTO>> getTop10RatedProducts() {
+        List<ProductResponseDTO> topProducts = productService.findTop10ByRating();
+        return ResponseEntity.ok(topProducts);
+    }
 }

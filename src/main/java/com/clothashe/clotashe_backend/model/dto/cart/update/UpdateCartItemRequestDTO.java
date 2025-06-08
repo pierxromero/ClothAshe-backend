@@ -18,7 +18,4 @@ public class UpdateCartItemRequestDTO {
     @Schema(description = "Updated quantity for the product", example = "2")
     private Integer quantity;
 
-    @NotNull(message = "Product ID must be provided")
-    @Schema(description = "Updated product ID, if changing the product", example = "12")
-    private Long productId;
 }

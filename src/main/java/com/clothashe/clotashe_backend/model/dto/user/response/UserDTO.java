@@ -7,7 +7,6 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
@@ -40,9 +39,6 @@ public class UserDTO {
     )
     private String numberPhone;
 
-
-    @Schema(description = "Date and time of the last login.", example = "2025-05-24T18:45:00")
-    private LocalDateTime lastLoginDate;
 
     @Schema(description = "Shopping cart associated with the user.")
     @Valid

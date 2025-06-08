@@ -8,5 +8,8 @@ public enum Role {
     ADMIN,
 
     @Schema(description = "Regular user with access to shopping, reviews, and personal account management.")
-    CLIENT
+    CLIENT,
+
+    @Schema(description = "Owner of the store.")
+    OWNER
 }

@@ -1,18 +1,22 @@
 package com.clothashe.clotashe_backend.model.entity.product;
+import com.clothashe.clotashe_backend.model.entity.review.ProductCommentEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
-@Table(name = "tbl_product")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
 @Builder
+@Table(name = "tbl_product")
 public class ProductEntity {
 
     @Id
@@ -54,4 +58,7 @@ public class ProductEntity {
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProductCommentEntity> comments = new ArrayList<>();
 }

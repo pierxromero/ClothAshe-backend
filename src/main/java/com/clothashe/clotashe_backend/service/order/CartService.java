@@ -6,7 +6,6 @@ import com.clothashe.clotashe_backend.model.dto.cart.response.CartResponseDTO;
 import com.clothashe.clotashe_backend.model.dto.cart.update.UpdateCartItemRequestDTO;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 public interface CartService {
 

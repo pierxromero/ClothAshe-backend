@@ -14,7 +14,7 @@ import com.clothashe.clotashe_backend.model.entity.user.UserEntity;
 import com.clothashe.clotashe_backend.repository.order.CartItemRepository;
 import com.clothashe.clotashe_backend.repository.order.CartRepository;
 import com.clothashe.clotashe_backend.repository.product.ProductRepository;
-import com.clothashe.clotashe_backend.service.auth.impl.AuthService;
+import com.clothashe.clotashe_backend.service.auth.AuthService;
 import com.clothashe.clotashe_backend.service.order.CartService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
@@ -23,8 +23,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -108,10 +106,6 @@ public class CartServiceImpl implements CartService {
 
         if (!item.getCart().getUser().getId().equals(user.getId())) {
             throw new AccessDeniedException("You cannot modify an item that is not yours.");
-        }
-
-        if (!item.getProduct().getId().equals(dto.getProductId())) {
-            throw new IllegalArgumentException("Changing the product of an item is not allowed. Delete it and add a new one.");
         }
 
         item.setQuantity(dto.getQuantity());

@@ -1,5 +1,4 @@
 package com.clothashe.clotashe_backend.model.entity.order;
-import com.clothashe.clotashe_backend.model.enums.PaymentMethod;
 import com.clothashe.clotashe_backend.model.enums.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.*;

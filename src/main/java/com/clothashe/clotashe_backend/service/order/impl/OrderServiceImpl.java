@@ -1,7 +1,6 @@
 package com.clothashe.clotashe_backend.service.order.impl;
 
 import com.clothashe.clotashe_backend.exception.ResourceNotFoundException;
-import com.clothashe.clotashe_backend.mapper.order.OrderItemMapper;
 import com.clothashe.clotashe_backend.mapper.order.OrderMapper;
 import com.clothashe.clotashe_backend.mapper.order.PaymentMapper;
 import com.clothashe.clotashe_backend.model.dto.order.create.CreateOrderRequestDTO;
@@ -19,10 +18,9 @@ import com.clothashe.clotashe_backend.model.enums.PaymentStatus;
 import com.clothashe.clotashe_backend.model.enums.Role;
 import com.clothashe.clotashe_backend.repository.misc.AddressRepository;
 import com.clothashe.clotashe_backend.repository.order.CartRepository;
-import com.clothashe.clotashe_backend.repository.order.OrderItemRepository;
 import com.clothashe.clotashe_backend.repository.order.OrderRepository;
 import com.clothashe.clotashe_backend.repository.order.PaymentRepository;
-import com.clothashe.clotashe_backend.service.auth.impl.AuthService;
+import com.clothashe.clotashe_backend.service.auth.AuthService;
 import com.clothashe.clotashe_backend.service.order.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -221,7 +219,6 @@ public class OrderServiceImpl implements OrderService {
             throw new AccessDeniedException("No permission to cancel this order");
         }
 
-        // Solo se puede cancelar si está PENDING
         if (!order.getStatus().equals(OrderStatus.PENDING)) {
             throw new IllegalStateException("Only PENDING orders can be cancelled");
         }
@@ -238,17 +235,14 @@ public class OrderServiceImpl implements OrderService {
         OrderEntity order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
 
-        // Validar que la orden pertenece al usuario
         if (!order.getUser().getId().equals(user.getId())) {
             throw new AccessDeniedException("You can only return your own orders");
         }
 
-        // Validar que la orden fue entregada
         if (!order.getStatus().equals(OrderStatus.DELIVERED)) {
             throw new IllegalStateException("Only delivered orders can be returned");
         }
 
-        // Simular devolución
         order.setStatus(OrderStatus.RETURNED);
         OrderEntity updated = orderRepository.save(order);
 

@@ -23,5 +23,5 @@ public class ColorEntity {
     private String name;
 
     @Column(name = "hex_code", nullable = false, length = 7)
-    private String hexCode; // Ej: "#FFFFFF"
+    private String hexCode;
 }

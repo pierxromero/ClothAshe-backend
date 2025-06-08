@@ -1,4 +1,6 @@
 package com.clothashe.clotashe_backend.service.product.impl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
 import com.clothashe.clotashe_backend.mapper.product.ProductMapper;
 import com.clothashe.clotashe_backend.model.dto.product.create.CreateProductRequestDTO;
@@ -98,5 +100,63 @@ public class ProductServiceImpl implements ProductService {
             throw new EntityNotFoundException("Product not found with id: " + id);
         }
         productRepository.deleteById(id);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ProductResponseDTO> findByCategoryId(Long categoryId) {
+        if (!categoryRepository.existsById(categoryId)) {
+            throw new EntityNotFoundException("Category not found with id: " + categoryId);
+        }
+
+        List<ProductEntity> products = productRepository.findByCategoryId(categoryId);
+
+        return products.stream()
+                .map(productMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ProductResponseDTO> findByPriceRange(Double minPrice, Double maxPrice) {
+        if (minPrice == null || maxPrice == null) {
+            throw new IllegalArgumentException("Both minPrice and maxPrice must be provided.");
+        }
+
+        if (minPrice > maxPrice) {
+            throw new IllegalArgumentException("minPrice cannot be greater than maxPrice.");
+        }
+
+        List<ProductEntity> products = productRepository.findByPriceBetween(minPrice, maxPrice);
+
+        return products.stream()
+                .map(productMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ProductResponseDTO> findByStockAvailability(boolean onlyWithStock) {
+        List<ProductEntity> products;
+
+        if (onlyWithStock) {
+            products = productRepository.findByStockGreaterThan(0);
+        } else {
+            products = productRepository.findByStockIsNullOrStockLessThanEqual(0);
+        }
+
+        return products.stream()
+                .map(productMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ProductResponseDTO> findTop10ByRating() {
+        Pageable topTen = PageRequest.of(0, 10); // Página 0, 10 elementos
+        return productRepository.findTopRatedProducts(topTen)
+                .stream()
+                .map(productMapper::toDto)
+                .collect(Collectors.toList());
     }
 }

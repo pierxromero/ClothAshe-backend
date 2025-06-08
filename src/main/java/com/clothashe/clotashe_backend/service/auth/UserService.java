@@ -1,14 +1,26 @@
 package com.clothashe.clotashe_backend.service.auth;
 
 
+import com.clothashe.clotashe_backend.model.dto.auth.UserWithAuthInfoDTO;
+import com.clothashe.clotashe_backend.model.dto.user.response.UserDTO;
+import com.clothashe.clotashe_backend.model.dto.user.update.ChangePasswordDTO;
+import com.clothashe.clotashe_backend.model.dto.user.update.LockUnlockDTO;
+import com.clothashe.clotashe_backend.model.dto.user.update.RoleChangeDTO;
+import com.clothashe.clotashe_backend.model.dto.user.update.UpdateUserDTO;
+
+import java.util.List;
+
 public interface UserService {
-//    UserDTO create(UserDTO dto);
-//
-//    UserDTO update(Long id, UserDTO dto);
-//
-//    UserDTO getById(Long id);
-//
-//    List<UserDTO> getAll();
-//
-//    void delete(Long id);
+    UserDTO getById(Long id);
+    List<UserDTO> getAll();
+    UserDTO getByEmail(String email);
+    List<UserDTO> getLockedUsers();
+    UserDTO getMe();
+
+    void deleteById(Long id);
+    UserDTO changeUserRole(Long id, RoleChangeDTO dto);
+    UserWithAuthInfoDTO lockUnlockUser(Long id, LockUnlockDTO dto);
+    UserDTO updateProfile(UpdateUserDTO dto);
+    void changePassword(ChangePasswordDTO dto);
+    void deleteOwnAccount();
 }

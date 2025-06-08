@@ -17,4 +17,12 @@ public interface ProductService {
     ProductResponseDTO update(Long id, UpdateProductRequestDTO dto);
 
     void delete(Long id);
+
+    List<ProductResponseDTO> findByCategoryId(Long categoryId);
+
+    List<ProductResponseDTO> findByPriceRange(Double minPrice, Double maxPrice);
+
+    List<ProductResponseDTO> findByStockAvailability(boolean onlyWithStock);
+
+    List<ProductResponseDTO> findTop10ByRating();
 }

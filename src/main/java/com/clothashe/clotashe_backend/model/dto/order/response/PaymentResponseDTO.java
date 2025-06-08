@@ -1,6 +1,5 @@
 package com.clothashe.clotashe_backend.model.dto.order.response;
 
-import com.clothashe.clotashe_backend.model.enums.PaymentMethod;
 import com.clothashe.clotashe_backend.model.enums.PaymentStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.DecimalMin;
@@ -26,10 +25,6 @@ public class PaymentResponseDTO {
     @DecimalMin(value = "0.01", inclusive = true, message = "Amount must be greater than zero")
     @Schema(description = "Total amount paid by the customer.", example = "250.00", minimum = "0.01", required = true)
     private BigDecimal amount;
-
-    @NotNull(message = "Payment method must not be null")
-    @Schema(description = "Method used to process the payment.", example = "CREDIT_CARD", required = true)
-    private PaymentMethod method;
 
     @NotNull(message = "Payment date must not be null")
     @Schema(description = "Date and time when the payment was made.", example = "2025-05-25T10:45:00", required = true)

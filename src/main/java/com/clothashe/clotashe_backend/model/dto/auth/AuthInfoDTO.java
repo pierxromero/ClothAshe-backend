@@ -1,6 +1,5 @@
 package com.clothashe.clotashe_backend.model.dto.auth;
 
-import com.clothashe.clotashe_backend.model.dto.user.response.UserDTO;
 import com.clothashe.clotashe_backend.model.dto.user.response.UserResponseDTO;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
@@ -34,10 +33,6 @@ public class AuthInfoDTO {
     @PastOrPresent(message = "Creation date cannot be in the future.")
     @Schema(description = "Date and time when the account was created.", example = "2024-11-19T10:30:00")
     private LocalDateTime createdAt;
-
-    @PastOrPresent(message = "Last login date cannot be in the future.")
-    @Schema(description = "Date and time of the user's last successful login.", example = "2025-05-23T08:15:45")
-    private LocalDateTime lastLogin;
 
     @NotNull(message = "Enabled status must not be null.")
     @Schema(description = "Indicates whether the account is currently enabled.", example = "true")

@@ -8,9 +8,8 @@ import com.clothashe.clotashe_backend.model.dto.user.response.UserInquiryRespons
 import com.clothashe.clotashe_backend.model.entity.user.UserEntity;
 import com.clothashe.clotashe_backend.model.entity.user.UserInquiryEntity;
 import com.clothashe.clotashe_backend.model.enums.Role;
-import com.clothashe.clotashe_backend.repository.auth.UserRepository;
 import com.clothashe.clotashe_backend.repository.misc.UserInquiryRepository;
-import com.clothashe.clotashe_backend.service.auth.impl.AuthService;
+import com.clothashe.clotashe_backend.service.auth.AuthService;
 import com.clothashe.clotashe_backend.service.misc.UserInquiryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -23,7 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -32,7 +31,6 @@ public class UserInquiryServiceImpl implements UserInquiryService {
     private final UserInquiryRepository inquiryRepository;
     private final UserInquiryMapper inquiryMapper;
     private final AuthService authService;
-    private final UserRepository userRepository;
 
     @Override
     public UserInquiryResponseDTO createInquiry(CreateUserInquiryRequestDTO dto) {
@@ -86,7 +84,6 @@ public class UserInquiryServiceImpl implements UserInquiryService {
         UserInquiryEntity inquiry = inquiryRepository.findById(inquiryId)
                 .orElseThrow(() -> new ResourceNotFoundException("Inquiry not found"));
 
-        // Check if user has permission to access this inquiry
         if (!user.getRole().equals(Role.ADMIN) && !inquiry.getUserInquiry().getId().equals(user.getId())) {
             throw new AccessDeniedException("No permission to access this inquiry");
         }

@@ -1,7 +1,14 @@
 package com.clothashe.clotashe_backend.model.dto.auth;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+
 public class LoginRequest {
+    @NotBlank(message = "The email is required")
+    @Email(message = "Format email is not valid")
     private String email;
+
+    @NotBlank(message = "The password is required")
     private String password;
 
     public LoginRequest() {

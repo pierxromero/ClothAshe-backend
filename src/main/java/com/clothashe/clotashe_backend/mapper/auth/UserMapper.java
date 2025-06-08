@@ -1,13 +1,14 @@
 package com.clothashe.clotashe_backend.mapper.auth;
-
-import com.clothashe.clotashe_backend.mapper.misc.AddressMapper;
-import com.clothashe.clotashe_backend.mapper.misc.FavoriteProductMapper;
-import com.clothashe.clotashe_backend.mapper.order.CartMapper;
-import com.clothashe.clotashe_backend.mapper.order.OrderMapper;
 import com.clothashe.clotashe_backend.model.dto.user.create.CreateUserRequestDTO;
 import com.clothashe.clotashe_backend.model.dto.user.response.*;
+import com.clothashe.clotashe_backend.model.dto.user.update.UpdateUserDTO;
 import com.clothashe.clotashe_backend.model.entity.user.UserEntity;
+import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValuePropertyMappingStrategy;
+
+import java.util.List;
 
 @Mapper(componentModel = "spring")
 
@@ -19,9 +20,9 @@ public interface UserMapper {
 
     UserDTO toUserDTO(UserEntity entity);
 
-    UserFavoritesDTO toUserFavoritesDTO(UserEntity entity);
+    List<UserDTO> toDTOs(List<UserEntity> entities);
 
-    UserAddressesDTO toUserAddressesDTO(UserEntity entity);
 
-    UserOrderHistoryDTO toUserOrderHistoryDTO(UserEntity entity);
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    void updateFromDto(UpdateUserDTO dto, @MappingTarget UserEntity entity);
 }

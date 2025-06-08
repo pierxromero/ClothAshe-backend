@@ -4,14 +4,11 @@ import com.clothashe.clotashe_backend.model.dto.review.create.CreateProductComme
 import com.clothashe.clotashe_backend.model.dto.review.response.ProductCommentResponseDTO;
 import com.clothashe.clotashe_backend.model.dto.review.update.UpdateProductCommentRequestDTO;
 import com.clothashe.clotashe_backend.model.entity.review.ProductCommentEntity;
-import org.mapstruct.BeanMapping;
-import org.mapstruct.Mapper;
-import org.mapstruct.MappingTarget;
-import org.mapstruct.NullValuePropertyMappingStrategy;
+import org.mapstruct.*;
 
 @Mapper(componentModel = "spring")
 public interface ProductCommentMapper {
-
+    @Mapping(source = "user.id", target = "userId")
     ProductCommentResponseDTO toResponseDTO(ProductCommentEntity entity);
 
 

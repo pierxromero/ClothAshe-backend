@@ -1,17 +1,31 @@
 package com.clothashe.clotashe_backend.service.auth.impl;
 
-import com.clothashe.clotashe_backend.model.dto.user.create.CreateUserRequestDTO;
-import com.clothashe.clotashe_backend.model.entity.cart.CartEntity;
+import com.clothashe.clotashe_backend.exception.BadRequestException;
+import com.clothashe.clotashe_backend.model.dto.auth.UserWithAuthInfoDTO;
+import com.clothashe.clotashe_backend.model.dto.user.response.UserDTO;
+import com.clothashe.clotashe_backend.model.dto.user.update.ChangePasswordDTO;
+import com.clothashe.clotashe_backend.model.dto.user.update.LockUnlockDTO;
+import com.clothashe.clotashe_backend.model.dto.user.update.RoleChangeDTO;
+import com.clothashe.clotashe_backend.model.dto.user.update.UpdateUserDTO;
+import com.clothashe.clotashe_backend.model.entity.auth.AuthInfoEntity;
+import com.clothashe.clotashe_backend.model.enums.Role;
+import com.clothashe.clotashe_backend.repository.auth.AuthInfoRepository;
 import com.clothashe.clotashe_backend.repository.auth.UserRepository;
+import com.clothashe.clotashe_backend.service.auth.AuthService;
 import com.clothashe.clotashe_backend.service.auth.UserService;
 import com.clothashe.clotashe_backend.mapper.auth.UserMapper;
 import com.clothashe.clotashe_backend.model.entity.user.UserEntity;
 
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -20,26 +34,143 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
 
-    public UserEntity createUser(CreateUserRequestDTO dto) {
-        if (userRepository.existsByEmail(dto.getEmail())) {
-            throw new IllegalArgumentException("Email already exists");
+    private final AuthInfoRepository authInfoRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final AuthService authService;
+
+
+    // --------------------------------------------------
+
+    @Override
+    @Transactional(readOnly = true)
+    public UserDTO getById(Long id) {
+        UserEntity user = userRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + id));
+        return userMapper.toUserDTO(user);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserDTO> getAll() {
+        List<UserEntity> users = userRepository.findAll();
+        return userMapper.toDTOs(users);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public UserDTO getByEmail(String email) {
+        UserEntity user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("User not found with email: " + email));
+        return userMapper.toUserDTO(user);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserDTO> getLockedUsers() {
+        List<AuthInfoEntity> lockedInfos = authInfoRepository.findByIsLockedTrue();
+        List<UserEntity> lockedUsers = lockedInfos.stream()
+                .map(AuthInfoEntity::getUser)
+                .collect(Collectors.toList());
+        return userMapper.toDTOs(lockedUsers);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public UserDTO getMe() {
+        UserEntity me = authService.getAuthenticatedUser();
+        return userMapper.toUserDTO(me);
+    }
+
+    // —— MUTACIÓN ————————————————————————————————————
+
+    @Override
+    @Transactional
+    public void deleteById(Long id) {
+        UserEntity targetUser = userRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + id));
+
+        if (targetUser.getRole() == Role.OWNER) {
+            throw new AccessDeniedException("Cannot delete a user with OWNER role.");
         }
 
-        if (userRepository.existsByNumberPhone(dto.getNumberPhone())) {
-            throw new IllegalArgumentException("Phone number already exists");
+        userRepository.deleteById(id);
+    }
+
+    @Override
+    @Transactional
+    public UserDTO changeUserRole(Long id, RoleChangeDTO dto) {
+        UserEntity currentUser = authService.getAuthenticatedUser();
+        if (currentUser.getRole() != Role.OWNER) {
+            throw new AccessDeniedException("Only OWNER can change user roles.");
         }
+        UserEntity targetUser = userRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + id));
+        if (targetUser.getRole() == Role.OWNER && !targetUser.getId().equals(currentUser.getId())) {
+            throw new AccessDeniedException("Cannot change the role of another OWNER.");
+        }
+        targetUser.setRole(dto.getNewRole());
+        targetUser = userRepository.save(targetUser);
 
-        UserEntity user = userMapper.toEntity(dto);
-        user.setAddresses(new ArrayList<>());
-        user.setFavorites(new ArrayList<>());
-        user.setPurchaseHistory(new ArrayList<>());
+        return userMapper.toUserDTO(targetUser);
+    }
 
-        CartEntity cart = new CartEntity();
-        cart.setActive(true);
-        cart.setCreatedDate(LocalDateTime.now());
-        cart.setUser(user);
-        user.setCart(cart);
+    @Override
+    @Transactional
+    public UserWithAuthInfoDTO lockUnlockUser(Long id, LockUnlockDTO dto) {
+        AuthInfoEntity auth = authInfoRepository.findByUserId(id)
+                .orElseThrow(() -> new EntityNotFoundException("AuthInfo not found for user id " + id));
 
-        return userRepository.save(user);
+        auth.setIsLocked(dto.getLock());
+        authInfoRepository.save(auth);
+
+        UserDTO userDto = userMapper.toUserDTO(auth.getUser());
+
+        return UserWithAuthInfoDTO.builder()
+                .locked(auth.getIsLocked())
+                .user(userDto)
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public UserDTO updateProfile(UpdateUserDTO dto){
+        UserEntity user = authService.getAuthenticatedUser();
+        if (userRepository.existsByEmailAndIdNot(dto.getEmail(), user.getId())) {
+            throw new BadRequestException(
+                    String.format("The email '%s' already exists", dto.getEmail())
+            );
+        }
+        if (userRepository.existsByNumberPhoneAndIdNot(dto.getNumberPhone(), user.getId())) {
+            throw new BadRequestException(
+                    String.format("The phone number '%s' already exists", dto.getNumberPhone())
+            );
+        }
+        userMapper.updateFromDto(dto, user);
+        user = userRepository.save(user);
+        return userMapper.toUserDTO(user);
+    }
+
+    @Override
+    @Transactional
+    public void changePassword(ChangePasswordDTO dto){
+        UserEntity user = authService.getAuthenticatedUser();
+        AuthInfoEntity auth = authInfoRepository
+                .findByUserId(user.getId())
+                .orElseThrow(() -> new EntityNotFoundException("AuthInfo not found for user id " + user.getId()));
+        if (dto.getNewPassword().equals(dto.getCurrentPassword())) {
+            throw new BadRequestException("The new password cannot be the same as the current password");
+        }
+        if (!passwordEncoder.matches(dto.getCurrentPassword(), auth.getPasswordHash())) {
+            throw new BadRequestException("Current password is incorrect");
+        }
+        auth.setPasswordHash(passwordEncoder.encode(dto.getNewPassword()));
+        authInfoRepository.save(auth);
+    }
+
+    @Override
+    @Transactional
+    public void deleteOwnAccount() {
+        UserEntity user = authService.getAuthenticatedUser();
+        userRepository.delete(user);
     }
 }

@@ -1,8 +1,6 @@
 package com.clothashe.clotashe_backend.model.dto.order.create;
 
-import com.clothashe.clotashe_backend.model.enums.PaymentMethod;
-import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.Valid;
+
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
