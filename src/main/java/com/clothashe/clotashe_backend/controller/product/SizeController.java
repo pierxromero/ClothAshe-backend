@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -25,7 +26,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
 @RestController
 @RequestMapping("/api/sizes")
 @RequiredArgsConstructor
@@ -58,19 +58,46 @@ public class SizeController {
             @ApiResponse(responseCode = "400", description = "Validation error",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = ApiError.class)
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                            {
+                              "message": "Invalid size code format",
+                              "status": 400,
+                              "errorCode": "VALIDATION_ERROR",
+                              "path": "/api/sizes",
+                              "timestamp": "2025-06-08T14:55:00"
+                            }
+                            """)
                     )
             ),
             @ApiResponse(responseCode = "403", description = "Access denied – ADMIN role required",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = ApiError.class)
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                            {
+                              "message": "Access denied",
+                              "status": 403,
+                              "errorCode": "FORBIDDEN",
+                              "path": "/api/sizes",
+                              "timestamp": "2025-06-08T14:56:00"
+                            }
+                            """)
                     )
             ),
             @ApiResponse(responseCode = "409", description = "Size code already exists",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = ApiError.class)
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                            {
+                              "message": "Size with code 'XL' already exists",
+                              "status": 409,
+                              "errorCode": "SIZE_CONFLICT",
+                              "path": "/api/sizes",
+                              "timestamp": "2025-06-08T14:57:00"
+                            }
+                            """)
                     )
             )
     })
@@ -106,19 +133,46 @@ public class SizeController {
             @ApiResponse(responseCode = "400", description = "Validation error",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = ApiError.class)
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                            {
+                              "message": "Invalid size update request",
+                              "status": 400,
+                              "errorCode": "VALIDATION_ERROR",
+                              "path": "/api/sizes/1",
+                              "timestamp": "2025-06-08T14:58:00"
+                            }
+                            """)
                     )
             ),
             @ApiResponse(responseCode = "403", description = "Access denied – ADMIN role required",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = ApiError.class)
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                            {
+                              "message": "Access denied",
+                              "status": 403,
+                              "errorCode": "FORBIDDEN",
+                              "path": "/api/sizes/1",
+                              "timestamp": "2025-06-08T14:59:00"
+                            }
+                            """)
                     )
             ),
             @ApiResponse(responseCode = "404", description = "Size not found",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = ApiError.class)
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                            {
+                              "message": "Size not found with id: 1",
+                              "status": 404,
+                              "errorCode": "SIZE_NOT_FOUND",
+                              "path": "/api/sizes/1",
+                              "timestamp": "2025-06-08T15:00:00"
+                            }
+                            """)
                     )
             )
     })
@@ -148,13 +202,31 @@ public class SizeController {
             @ApiResponse(responseCode = "403", description = "Access denied – ADMIN role required",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = ApiError.class)
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                            {
+                              "message": "Access denied",
+                              "status": 403,
+                              "errorCode": "FORBIDDEN",
+                              "path": "/api/sizes/3",
+                              "timestamp": "2025-06-08T15:01:00"
+                            }
+                            """)
                     )
             ),
             @ApiResponse(responseCode = "404", description = "Size not found",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = ApiError.class)
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                            {
+                              "message": "Size not found with id: 3",
+                              "status": 404,
+                              "errorCode": "SIZE_NOT_FOUND",
+                              "path": "/api/sizes/3",
+                              "timestamp": "2025-06-08T15:02:00"
+                            }
+                            """)
                     )
             )
     })
@@ -183,7 +255,16 @@ public class SizeController {
             @ApiResponse(responseCode = "403", description = "Access denied – ADMIN role required",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = ApiError.class)
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                            {
+                              "message": "Access denied",
+                              "status": 403,
+                              "errorCode": "FORBIDDEN",
+                              "path": "/api/sizes",
+                              "timestamp": "2025-06-08T15:03:00"
+                            }
+                            """)
                     )
             )
     })
@@ -204,13 +285,31 @@ public class SizeController {
             @ApiResponse(responseCode = "403", description = "Access denied – ADMIN role required",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = ApiError.class)
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                            {
+                              "message": "Access denied",
+                              "status": 403,
+                              "errorCode": "FORBIDDEN",
+                              "path": "/api/sizes/4",
+                              "timestamp": "2025-06-08T15:04:00"
+                            }
+                            """)
                     )
             ),
             @ApiResponse(responseCode = "404", description = "Size not found",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = ApiError.class)
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                            {
+                              "message": "Size not found with id: 4",
+                              "status": 404,
+                              "errorCode": "SIZE_NOT_FOUND",
+                              "path": "/api/sizes/4",
+                              "timestamp": "2025-06-08T15:05:00"
+                            }
+                            """)
                     )
             )
     })

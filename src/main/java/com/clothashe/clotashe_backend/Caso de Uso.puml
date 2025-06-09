@@ -1,0 +1,200 @@
+@startuml
+skinparam usecase {
+  BorderColor Black
+  BackgroundColor White
+  ArrowColor Black
+}
+
+package "Sistema Tienda Online - ClothAshe" {
+
+  actor Owner
+  actor Administrador
+  actor Cliente
+
+  /' Direcciones '/
+  usecase "Obtener dirección" as UC1
+  usecase "Actualizar dirección" as UC2
+  usecase "Eliminar dirección" as UC3
+  usecase "Listar direcciones" as UC4
+  usecase "Crear dirección" as UC5
+  usecase "Listar direcciones de usuario" as UC6
+  usecase "Listar mis direcciones" as UC7
+
+  /' Favoritos '/
+  usecase "Agregar favorito" as UC8
+  usecase "Ver favorito" as UC9
+  usecase "Eliminar favorito" as UC10
+  usecase "Ver favoritos de usuario" as UC11
+  usecase "Ver mis favoritos" as UC12
+
+  /' Colores '/
+  usecase "Obtener color" as UC13
+  usecase "Actualizar color" as UC14
+  usecase "Eliminar color" as UC15
+  usecase "Listar colores" as UC16
+  usecase "Crear color" as UC17
+
+  /' Carrito '/
+  usecase "Agregar al carrito" as UC18
+  usecase "Actualizar item carrito" as UC19
+  usecase "Eliminar item carrito" as UC20
+  usecase "Ver carrito" as UC21
+  usecase "Calcular subtotal" as UC22
+  usecase "Vaciar carrito" as UC23
+
+  /' Pedidos '/
+  usecase "Crear pedido" as UC24
+  usecase "Actualizar estado pedido" as UC25
+  usecase "Cancelar pedido" as UC26
+  usecase "Devolver pedido" as UC27
+  usecase "Procesar pago" as UC28
+  usecase "Obtener pedido" as UC29
+  usecase "Listar mis pedidos" as UC30
+  usecase "Listar todos los pedidos" as UC31
+
+  /' Productos '/
+  usecase "Listar productos" as UC32
+  usecase "Obtener producto" as UC33
+  usecase "Crear producto" as UC34
+  usecase "Actualizar producto" as UC35
+  usecase "Eliminar producto" as UC36
+  usecase "Ver top productos" as UC37
+  usecase "Filtrar por stock" as UC38
+  usecase "Filtrar por precio" as UC39
+  usecase "Filtrar por categoría" as UC40
+
+  /' Tallas '/
+  usecase "Listar tallas" as UC41
+  usecase "Obtener talla" as UC42
+  usecase "Crear talla" as UC43
+  usecase "Actualizar talla" as UC44
+  usecase "Eliminar talla" as UC45
+
+  /' Marcas '/
+  usecase "Listar marcas" as UC46
+  usecase "Obtener marca" as UC47
+  usecase "Crear marca" as UC48
+  usecase "Actualizar marca" as UC49
+  usecase "Eliminar marca" as UC50
+
+  /' Categorías '/
+  usecase "Listar categorías" as UC51
+  usecase "Obtener categoría" as UC52
+  usecase "Crear categoría" as UC53
+  usecase "Actualizar categoría" as UC54
+  usecase "Eliminar categoría" as UC55
+
+  /' Consultas '/
+  usecase "Crear consulta" as UC56
+  usecase "Responder consulta" as UC57
+  usecase "Obtener consulta" as UC58
+  usecase "Eliminar consulta" as UC59
+  usecase "Listar mis consultas" as UC60
+  usecase "Listar todas las consultas" as UC61
+
+  /' Comentarios '/
+  usecase "Crear comentario" as UC62
+  usecase "Obtener comentario" as UC63
+  usecase "Actualizar comentario" as UC64
+  usecase "Eliminar comentario" as UC65
+  usecase "Listar comentarios" as UC66
+  usecase "Listar por usuario" as UC67
+  usecase "Listar por producto" as UC68
+  usecase "Listar mis comentarios" as UC69
+
+  /' Usuario '/
+  usecase "Ver perfil" as UC70
+  usecase "Actualizar perfil" as UC71
+  usecase "Eliminar cuenta" as UC72
+  usecase "Cambiar contraseña" as UC73
+  usecase "Cambiar rol" as UC74
+  usecase "Bloquear usuario" as UC75
+  usecase "Listar usuarios" as UC76
+  usecase "Obtener usuario" as UC77
+  usecase "Eliminar usuario" as UC78
+  usecase "Buscar usuario" as UC79
+  usecase "Listar usuarios bloqueados" as UC80
+
+  /' Autenticación '/
+  usecase "Registrar" as UC81
+  usecase "Login" as UC82
+}
+
+' Relaciones entre actores y casos de uso
+Cliente --> UC1
+Cliente --> UC2
+Cliente --> UC3
+Cliente --> UC4
+Cliente --> UC5
+Cliente --> UC6
+Cliente --> UC7
+Cliente --> UC8
+Cliente --> UC9
+Cliente --> UC10
+Cliente --> UC11
+Cliente --> UC12
+Cliente --> UC18
+Cliente --> UC19
+Cliente --> UC20
+Cliente --> UC21
+Cliente --> UC22
+Cliente --> UC23
+Cliente --> UC24
+Cliente --> UC26
+Cliente --> UC28
+Cliente --> UC29
+Cliente --> UC30
+Cliente --> UC33
+Cliente --> UC32
+Cliente --> UC37
+Cliente --> UC38
+Cliente --> UC39
+Cliente --> UC40
+Cliente --> UC42
+Cliente --> UC41
+Cliente --> UC43
+Cliente --> UC69
+Cliente --> UC62
+Cliente --> UC67
+Cliente --> UC68
+Cliente --> UC56
+Cliente --> UC60
+Cliente --> UC70
+Cliente --> UC71
+Cliente --> UC72
+Cliente --> UC73
+Cliente --> UC79
+
+Administrador --> UC13
+Administrador --> UC14
+Administrador --> UC15
+Administrador --> UC16
+Administrador --> UC17
+Administrador --> UC25
+Administrador --> UC31
+Administrador --> UC35
+Administrador --> UC36
+Administrador --> UC49
+Administrador --> UC50
+Administrador --> UC51
+Administrador --> UC52
+Administrador --> UC53
+Administrador --> UC54
+Administrador --> UC55
+Administrador --> UC57
+Administrador --> UC58
+Administrador --> UC59
+Administrador --> UC61
+Administrador --> UC63
+Administrador --> UC65
+Administrador --> UC66
+Administrador --> UC76
+Administrador --> UC77
+Administrador --> UC78
+Administrador --> UC80
+
+' Generalización: Owner puede todo
+Owner <|-- Administrador
+Owner <|-- Cliente
+
+@endumlduml

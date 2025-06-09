@@ -1,10 +1,13 @@
 package com.clothashe.clotashe_backend.controller.order;
 
+import com.clothashe.clotashe_backend.exception.error.ApiError;
 import com.clothashe.clotashe_backend.model.dto.cart.create.CreateCartItemRequestDTO;
 import com.clothashe.clotashe_backend.model.dto.cart.response.CartItemResponseDTO;
 import com.clothashe.clotashe_backend.model.dto.cart.response.CartResponseDTO;
 import com.clothashe.clotashe_backend.model.dto.cart.update.UpdateCartItemRequestDTO;
 import com.clothashe.clotashe_backend.service.order.CartService;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -35,14 +38,29 @@ public class CartController {
     @Operation(
             summary = "Get the current user's active cart",
             description = "Returns the active cart for the authenticated user. If no active cart exists, one is created.",
-            security = @SecurityRequirement(name = "bearerAuth"),
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Active cart retrieved successfully",
-                            content = @Content(mediaType = "application/json",
-                                    schema = @Schema(implementation = CartResponseDTO.class))),
-                    @ApiResponse(responseCode = "401", description = "Unauthorized - Invalid or missing token")
-            }
+            security = @SecurityRequirement(name = "bearerAuth")
     )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Active cart retrieved successfully",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = CartResponseDTO.class))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - Invalid or missing token",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                    {
+                      "message": "Authentication required",
+                      "status": 401,
+                      "errorCode": "UNAUTHORIZED",
+                      "path": "/api/cart",
+                      "timestamp": "2025-06-08T16:00:00"
+                    }
+                    """
+                            )
+                    )
+            )
+    })
     @GetMapping
     @PreAuthorize("hasRole('CLIENT')")
     public ResponseEntity<CartResponseDTO> viewCart() {
@@ -58,17 +76,59 @@ public class CartController {
                     required = true,
                     description = "Product and quantity to add",
                     content = @Content(schema = @Schema(implementation = CreateCartItemRequestDTO.class))
-            ),
-            responses = {
-                    @ApiResponse(responseCode = "201", description = "Item added successfully",
-                            content = @Content(mediaType = "application/json",
-                                    schema = @Schema(implementation = CartItemResponseDTO.class))),
-                    @ApiResponse(responseCode = "400", description = "Invalid input data"),
-                    @ApiResponse(responseCode = "401", description = "Unauthorized"),
-                    @ApiResponse(responseCode = "404", description = "Product not found")
-            }
+            )
     )
-
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Item added successfully",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = CartItemResponseDTO.class))
+            ),
+            @ApiResponse(responseCode = "400", description = "Invalid input data",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                    {
+                      "message": "Quantity must be at least 1",
+                      "status": 400,
+                      "errorCode": "BAD_REQUEST",
+                      "path": "/api/cart/items",
+                      "timestamp": "2025-06-08T16:00:00"
+                    }
+                    """
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - Invalid or missing token",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                    {
+                      "message": "Authentication required",
+                      "status": 401,
+                      "errorCode": "UNAUTHORIZED",
+                      "path": "/api/cart/items",
+                      "timestamp": "2025-06-08T16:00:00"
+                    }
+                    """
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "404", description = "Product not found",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                    {
+                      "message": "Product with ID 123 not found",
+                      "status": 404,
+                      "errorCode": "NOT_FOUND",
+                      "path": "/api/cart/items",
+                      "timestamp": "2025-06-08T16:00:00"
+                    }
+                    """
+                            )
+                    )
+            )
+    })
     @PostMapping("/items")
     @PreAuthorize("hasRole('CLIENT')")
     public ResponseEntity<CartItemResponseDTO> addItemToCart(
@@ -88,18 +148,74 @@ public class CartController {
                     required = true,
                     description = "New quantity for the item",
                     content = @Content(schema = @Schema(implementation = UpdateCartItemRequestDTO.class))
-            ),
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Item updated successfully",
-                            content = @Content(mediaType = "application/json",
-                                    schema = @Schema(implementation = CartItemResponseDTO.class))),
-                    @ApiResponse(responseCode = "400", description = "Invalid input"),
-                    @ApiResponse(responseCode = "401", description = "Unauthorized"),
-                    @ApiResponse(responseCode = "403", description = "Forbidden - User does not own the item"),
-                    @ApiResponse(responseCode = "404", description = "Cart item not found")
-            }
+            )
     )
-
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Item updated successfully",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = CartItemResponseDTO.class))
+            ),
+            @ApiResponse(responseCode = "400", description = "Invalid input data",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                    {
+                      "message": "Quantity must be at least 1",
+                      "status": 400,
+                      "errorCode": "BAD_REQUEST",
+                      "path": "/api/cart/items/456",
+                      "timestamp": "2025-06-08T16:00:00"
+                    }
+                    """
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - Invalid or missing token",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                    {
+                      "message": "Authentication required",
+                      "status": 401,
+                      "errorCode": "UNAUTHORIZED",
+                      "path": "/api/cart/items/456",
+                      "timestamp": "2025-06-08T16:00:00"
+                    }
+                    """
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "403", description = "Forbidden - User does not own the item",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                    {
+                      "message": "Not authorized to modify this cart item",
+                      "status": 403,
+                      "errorCode": "FORBIDDEN",
+                      "path": "/api/cart/items/456",
+                      "timestamp": "2025-06-08T16:00:00"
+                    }
+                    """
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "404", description = "Cart item not found",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                    {
+                      "message": "Cart item with ID 456 not found",
+                      "status": 404,
+                      "errorCode": "NOT_FOUND",
+                      "path": "/api/cart/items/456",
+                      "timestamp": "2025-06-08T16:00:00"
+                    }
+                    """
+                            )
+                    )
+            )
+    })
     @PutMapping("/items/{cartItemId}")
     @PreAuthorize("hasRole('CLIENT')")
     public ResponseEntity<CartItemResponseDTO> updateCartItem(
@@ -115,14 +231,56 @@ public class CartController {
             security = @SecurityRequirement(name = "bearerAuth"),
             parameters = {
                     @Parameter(name = "cartItemId", description = "ID of the cart item to remove", required = true)
-            },
-            responses = {
-                    @ApiResponse(responseCode = "204", description = "Item removed successfully"),
-                    @ApiResponse(responseCode = "401", description = "Unauthorized"),
-                    @ApiResponse(responseCode = "403", description = "Forbidden - User does not own the item"),
-                    @ApiResponse(responseCode = "404", description = "Cart item not found")
             }
     )
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Item removed successfully"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - Invalid or missing token",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                    {
+                      "message": "Authentication required",
+                      "status": 401,
+                      "errorCode": "UNAUTHORIZED",
+                      "path": "/api/cart/items/789",
+                      "timestamp": "2025-06-08T16:00:00"
+                    }
+                    """
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "403", description = "Forbidden - User does not own the item",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                    {
+                      "message": "Not authorized to delete this cart item",
+                      "status": 403,
+                      "errorCode": "FORBIDDEN",
+                      "path": "/api/cart/items/789",
+                      "timestamp": "2025-06-08T16:00:00"
+                    }
+                    """
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "404", description = "Cart item not found",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                    {
+                      "message": "Cart item with ID 789 not found",
+                      "status": 404,
+                      "errorCode": "NOT_FOUND",
+                      "path": "/api/cart/items/789",
+                      "timestamp": "2025-06-08T16:00:00"
+                    }
+                    """
+                            )
+                    )
+            )
+    })
     @DeleteMapping("/items/{cartItemId}")
     @PreAuthorize("hasRole('CLIENT')")
     public ResponseEntity<Void> removeItemFromCart(@PathVariable Long cartItemId) {
@@ -133,13 +291,41 @@ public class CartController {
     @Operation(
             summary = "Clear all items in the cart",
             description = "Removes all items from the current user's active cart.",
-            security = @SecurityRequirement(name = "bearerAuth"),
-            responses = {
-                    @ApiResponse(responseCode = "204", description = "Cart cleared successfully"),
-                    @ApiResponse(responseCode = "401", description = "Unauthorized"),
-                    @ApiResponse(responseCode = "404", description = "Cart not found")
-            }
+            security = @SecurityRequirement(name = "bearerAuth")
     )
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Cart cleared successfully"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - Invalid or missing token",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                    {
+                      "message": "Authentication required",
+                      "status": 401,
+                      "errorCode": "UNAUTHORIZED",
+                      "path": "/api/cart/clear",
+                      "timestamp": "2025-06-08T16:00:00"
+                    }
+                    """
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "404", description = "Cart not found",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                    {
+                      "message": "Active cart not found",
+                      "status": 404,
+                      "errorCode": "NOT_FOUND",
+                      "path": "/api/cart/clear",
+                      "timestamp": "2025-06-08T16:00:00"
+                    }
+                    """
+                            )
+                    )
+            )
+    })
     @DeleteMapping("/clear")
     @PreAuthorize("hasRole('CLIENT')")
     public ResponseEntity<Void> clearCart() {
@@ -150,15 +336,44 @@ public class CartController {
     @Operation(
             summary = "Calculate subtotal of the cart",
             description = "Returns the total cost of all items in the current user's cart.",
-            security = @SecurityRequirement(name = "bearerAuth"),
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Subtotal calculated successfully",
-                            content = @Content(mediaType = "application/json",
-                                    schema = @Schema(implementation = BigDecimal.class))),
-                    @ApiResponse(responseCode = "401", description = "Unauthorized"),
-                    @ApiResponse(responseCode = "404", description = "Cart not found")
-            }
+            security = @SecurityRequirement(name = "bearerAuth")
     )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Subtotal calculated successfully",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = BigDecimal.class))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - Invalid or missing token",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                    {
+                      "message": "Authentication required",
+                      "status": 401,
+                      "errorCode": "UNAUTHORIZED",
+                      "path": "/api/cart/subtotal",
+                      "timestamp": "2025-06-08T16:00:00"
+                    }
+                    """
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "404", description = "Cart not found",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                    {
+                      "message": "Active cart not found",
+                      "status": 404,
+                      "errorCode": "NOT_FOUND",
+                      "path": "/api/cart/subtotal",
+                      "timestamp": "2025-06-08T16:00:00"
+                    }
+                    """
+                            )
+                    )
+            )
+    })
     @GetMapping("/subtotal")
     @PreAuthorize("hasRole('CLIENT')")
     public ResponseEntity<BigDecimal> calculateSubtotal() {

@@ -13,7 +13,6 @@ import lombok.*;
 @ToString
 @Schema(description = "DTO for updating an existing brand.")
 public class UpdateBrandRequestDTO {
-
     @NotBlank(message = "Brand name must not be blank")
     @Size(max = 255, message = "Brand name must be at most 255 characters")
     @Schema(description = "Updated name of the brand.", example = "Nike", required = true, maxLength = 255)

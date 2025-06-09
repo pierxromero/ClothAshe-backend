@@ -6,12 +6,14 @@ import com.clothashe.clotashe_backend.model.dto.user.response.AddressResponseDTO
 import com.clothashe.clotashe_backend.model.dto.user.update.UpdateAddressRequestDTO;
 import com.clothashe.clotashe_backend.service.misc.AddressService;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -23,79 +25,192 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/addresses")
 @RequiredArgsConstructor
+@Validated
 @Tag(name = "Addresses", description = "Operations related to user addresses")
 public class AddressController {
 
     private final AddressService addressService;
 
-    @Operation(
-            summary = "Create a new address for the authenticated user",
-            description = "Allows any authenticated user to create a new address. The address will be associated with their account."
-    )
-    @ApiResponses(value = {
+    @Operation(summary = "Create a new address", description = "Create an address for the authenticated user.")
+    @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Address successfully created",
-                    content = @Content(schema = @Schema(implementation = AddressResponseDTO.class))),
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = AddressResponseDTO.class))
+            ),
             @ApiResponse(responseCode = "400", description = "Invalid address data",
-                    content = @Content(schema = @Schema(implementation = ApiError.class))),
-            @ApiResponse(responseCode = "401", description = "Unauthorized access")
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                    {
+                      "message": "Street is required",
+                      "status": 400,
+                      "errorCode": "BAD_REQUEST",
+                      "path": "/api/addresses",
+                      "timestamp": "2025-06-08T16:00:00"
+                    }
+                    """
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized access",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                    {
+                      "message": "Authentication required",
+                      "status": 401,
+                      "errorCode": "UNAUTHORIZED",
+                      "path": "/api/addresses",
+                      "timestamp": "2025-06-08T16:00:00"
+                    }
+                    """
+                            )
+                    )
+            )
     })
     @PostMapping
     public ResponseEntity<AddressResponseDTO> createAddress(
-            @RequestBody @Valid CreateAddressRequestDTO requestDTO) {
+            @Valid @RequestBody CreateAddressRequestDTO requestDTO
+    ) {
         AddressResponseDTO created = addressService.createAddress(requestDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
-    @Operation(
-            summary = "Get an address by its ID",
-            description = "Returns the address with the specified ID. The user must own the address or be an admin."
-    )
-    @ApiResponses(value = {
+    @Operation(summary = "Get address by ID", description = "Returns the address. Must be owner or admin.")
+    @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Address found",
-                    content = @Content(schema = @Schema(implementation = AddressResponseDTO.class))),
-            @ApiResponse(responseCode = "403", description = "Access denied (not owner or admin)",
-                    content = @Content(schema = @Schema(implementation = ApiError.class))),
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = AddressResponseDTO.class))
+            ),
+            @ApiResponse(responseCode = "403", description = "Access denied",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                    {
+                      "message": "Access denied",
+                      "status": 403,
+                      "errorCode": "FORBIDDEN",
+                      "path": "/api/addresses/42",
+                      "timestamp": "2025-06-08T16:00:00"
+                    }
+                    """
+                            )
+                    )
+            ),
             @ApiResponse(responseCode = "404", description = "Address not found",
-                    content = @Content(schema = @Schema(implementation = ApiError.class)))
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                    {
+                      "message": "Address not found",
+                      "status": 404,
+                      "errorCode": "NOT_FOUND",
+                      "path": "/api/addresses/42",
+                      "timestamp": "2025-06-08T16:00:00"
+                    }
+                    """
+                            )
+                    )
+            )
     })
     @GetMapping("/{id}")
     public ResponseEntity<AddressResponseDTO> getAddressById(@PathVariable Long id) {
-        AddressResponseDTO dto = addressService.getAddressById(id);
-        return ResponseEntity.ok(dto);
+        return ResponseEntity.ok(addressService.getAddressById(id));
     }
 
-    @Operation(
-            summary = "Update an existing address",
-            description = "Allows the owner or an admin to update the fields of an address."
-    )
-    @ApiResponses(value = {
+    @Operation(summary = "Update an address", description = "Update fields of an address. Must be owner or admin.")
+    @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Address successfully updated",
-                    content = @Content(schema = @Schema(implementation = AddressResponseDTO.class))),
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = AddressResponseDTO.class))
+            ),
             @ApiResponse(responseCode = "400", description = "Invalid address data",
-                    content = @Content(schema = @Schema(implementation = ApiError.class))),
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                    {
+                      "message": "City must not be blank",
+                      "status": 400,
+                      "errorCode": "BAD_REQUEST",
+                      "path": "/api/addresses/42",
+                      "timestamp": "2025-06-08T16:00:00"
+                    }
+                    """
+                            )
+                    )
+            ),
             @ApiResponse(responseCode = "403", description = "Access denied",
-                    content = @Content(schema = @Schema(implementation = ApiError.class))),
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                    {
+                      "message": "Access denied",
+                      "status": 403,
+                      "errorCode": "FORBIDDEN",
+                      "path": "/api/addresses/42",
+                      "timestamp": "2025-06-08T16:00:00"
+                    }
+                    """
+                            )
+                    )
+            ),
             @ApiResponse(responseCode = "404", description = "Address not found",
-                    content = @Content(schema = @Schema(implementation = ApiError.class)))
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                    {
+                      "message": "Address not found",
+                      "status": 404,
+                      "errorCode": "NOT_FOUND",
+                      "path": "/api/addresses/42",
+                      "timestamp": "2025-06-08T16:00:00"
+                    }
+                    """
+                            )
+                    )
+            )
     })
     @PutMapping("/{id}")
     public ResponseEntity<AddressResponseDTO> updateAddress(
             @PathVariable Long id,
-            @RequestBody @Valid UpdateAddressRequestDTO updateDTO) {
-        AddressResponseDTO updated = addressService.updateAddress(id, updateDTO);
-        return ResponseEntity.ok(updated);
+            @Valid @RequestBody UpdateAddressRequestDTO updateDTO
+    ) {
+        return ResponseEntity.ok(addressService.updateAddress(id, updateDTO));
     }
 
-    @Operation(
-            summary = "Delete an address",
-            description = "Deletes an address if the user is the owner or an admin. This does not affect past orders."
-    )
-    @ApiResponses(value = {
+    @Operation(summary = "Delete an address", description = "Deletes an address. Must be owner or admin.")
+    @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Address successfully deleted"),
             @ApiResponse(responseCode = "403", description = "Access denied",
-                    content = @Content(schema = @Schema(implementation = ApiError.class))),
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                    {
+                      "message": "Access denied",
+                      "status": 403,
+                      "errorCode": "FORBIDDEN",
+                      "path": "/api/addresses/42",
+                      "timestamp": "2025-06-08T16:00:00"
+                    }
+                    """
+                            )
+                    )
+            ),
             @ApiResponse(responseCode = "404", description = "Address not found",
-                    content = @Content(schema = @Schema(implementation = ApiError.class)))
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                    {
+                      "message": "Address not found",
+                      "status": 404,
+                      "errorCode": "NOT_FOUND",
+                      "path": "/api/addresses/42",
+                      "timestamp": "2025-06-08T16:00:00"
+                    }
+                    """
+                            )
+                    )
+            )
     })
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteAddress(@PathVariable Long id) {
@@ -103,47 +218,82 @@ public class AddressController {
         return ResponseEntity.noContent().build();
     }
 
-    @Operation(
-            summary = "Get all addresses of the authenticated user",
-            description = "Returns a list of all addresses associated with the current user."
-    )
-    @ApiResponses(value = {
+    @Operation(summary = "List my addresses", description = "Returns all addresses of the authenticated user.")
+    @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Addresses retrieved successfully",
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = AddressResponseDTO.class)))),
-            @ApiResponse(responseCode = "401", description = "Unauthorized access")
+                    content = @Content(mediaType = "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = AddressResponseDTO.class)))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized access",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                    {
+                      "message": "Authentication required",
+                      "status": 401,
+                      "errorCode": "UNAUTHORIZED",
+                      "path": "/api/addresses/me",
+                      "timestamp": "2025-06-08T16:00:00"
+                    }
+                    """
+                            )
+                    )
+            )
     })
     @GetMapping("/me")
     public ResponseEntity<List<AddressResponseDTO>> getAllMyAddresses() {
         return ResponseEntity.ok(addressService.getAllMyAddresses());
     }
 
-    @Operation(
-            summary = "Get all addresses for a specific user (Admin only)",
-            description = "Allows administrators to retrieve all addresses linked to a user ID."
-    )
-    @ApiResponses(value = {
+    @Operation(summary = "List addresses by user", description = "Returns all addresses for a given user. ADMIN only.")
+    @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Addresses retrieved successfully",
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = AddressResponseDTO.class)))),
-            @ApiResponse(responseCode = "403", description = "Access denied (not admin)",
-                    content = @Content(schema = @Schema(implementation = ApiError.class)))
+                    content = @Content(mediaType = "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = AddressResponseDTO.class)))
+            ),
+            @ApiResponse(responseCode = "403", description = "Access denied",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                    {
+                      "message": "Access denied",
+                      "status": 403,
+                      "errorCode": "FORBIDDEN",
+                      "path": "/api/addresses/user/10",
+                      "timestamp": "2025-06-08T16:00:00"
+                    }
+                    """
+                            )
+                    )
+            )
     })
-    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<AddressResponseDTO>> getAllAddressesByUserId(@PathVariable Long userId) {
         return ResponseEntity.ok(addressService.getAllAddressesByUserId(userId));
     }
 
-    @Operation(
-            summary = "Get all addresses in the system (Admin only)",
-            description = "Returns all addresses stored in the database. Requires admin privileges."
-    )
-    @ApiResponses(value = {
+    @Operation(summary = "List all addresses", description = "Returns every address in the system. ADMIN only.")
+    @ApiResponses({
             @ApiResponse(responseCode = "200", description = "All addresses retrieved successfully",
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = AddressResponseDTO.class)))),
-            @ApiResponse(responseCode = "403", description = "Access denied (not admin)",
-                    content = @Content(schema = @Schema(implementation = ApiError.class)))
+                    content = @Content(mediaType = "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = AddressResponseDTO.class)))
+            ),
+            @ApiResponse(responseCode = "403", description = "Access denied",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                    {
+                      "message": "Access denied",
+                      "status": 403,
+                      "errorCode": "FORBIDDEN",
+                      "path": "/api/addresses",
+                      "timestamp": "2025-06-08T16:00:00"
+                    }
+                    """
+                            )
+                    )
+            )
     })
-    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public ResponseEntity<List<AddressResponseDTO>> getAllAddresses() {
         return ResponseEntity.ok(addressService.getAllAddresses());

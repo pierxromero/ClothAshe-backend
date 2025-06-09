@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -25,7 +26,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
 @RestController
 @RequestMapping("/api/colors")
 @RequiredArgsConstructor
@@ -58,19 +58,49 @@ public class ColorController {
             @ApiResponse(responseCode = "400", description = "Validation error",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = ApiError.class)
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                            {
+                              "message": "Hex code must start with #",
+                              "status": 400,
+                              "errorCode": "VALIDATION_ERROR",
+                              "path": "/api/colors",
+                              "timestamp": "2025-06-08T16:00:00"
+                            }
+                            """
+                            )
                     )
             ),
             @ApiResponse(responseCode = "403", description = "Access denied – ADMIN role required",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = ApiError.class)
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                            {
+                              "message": "Access denied",
+                              "status": 403,
+                              "errorCode": "FORBIDDEN",
+                              "path": "/api/colors",
+                              "timestamp": "2025-06-08T16:00:00"
+                            }
+                            """
+                            )
                     )
             ),
             @ApiResponse(responseCode = "409", description = "Color already exists",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = ApiError.class)
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                            {
+                              "message": "Color with name 'Red' already exists",
+                              "status": 409,
+                              "errorCode": "COLOR_ALREADY_EXISTS",
+                              "path": "/api/colors",
+                              "timestamp": "2025-06-08T16:00:00"
+                            }
+                            """
+                            )
                     )
             )
     })
@@ -106,19 +136,49 @@ public class ColorController {
             @ApiResponse(responseCode = "400", description = "Validation error",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = ApiError.class)
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                            {
+                              "message": "Color name cannot be blank",
+                              "status": 400,
+                              "errorCode": "VALIDATION_ERROR",
+                              "path": "/api/colors/2",
+                              "timestamp": "2025-06-08T16:00:00"
+                            }
+                            """
+                            )
                     )
             ),
             @ApiResponse(responseCode = "403", description = "Access denied – ADMIN role required",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = ApiError.class)
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                            {
+                              "message": "Access denied",
+                              "status": 403,
+                              "errorCode": "FORBIDDEN",
+                              "path": "/api/colors/2",
+                              "timestamp": "2025-06-08T16:00:00"
+                            }
+                            """
+                            )
                     )
             ),
             @ApiResponse(responseCode = "404", description = "Color not found",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = ApiError.class)
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                            {
+                              "message": "Color not found with id: 2",
+                              "status": 404,
+                              "errorCode": "COLOR_NOT_FOUND",
+                              "path": "/api/colors/2",
+                              "timestamp": "2025-06-08T16:00:00"
+                            }
+                            """
+                            )
                     )
             )
     })
@@ -148,13 +208,33 @@ public class ColorController {
             @ApiResponse(responseCode = "403", description = "Access denied – ADMIN role required",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = ApiError.class)
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                            {
+                              "message": "Access denied",
+                              "status": 403,
+                              "errorCode": "FORBIDDEN",
+                              "path": "/api/colors/5",
+                              "timestamp": "2025-06-08T16:00:00"
+                            }
+                            """
+                            )
                     )
             ),
             @ApiResponse(responseCode = "404", description = "Color not found",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = ApiError.class)
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                            {
+                              "message": "Color not found with id: 5",
+                              "status": 404,
+                              "errorCode": "COLOR_NOT_FOUND",
+                              "path": "/api/colors/5",
+                              "timestamp": "2025-06-08T16:00:00"
+                            }
+                            """
+                            )
                     )
             )
     })
@@ -183,7 +263,17 @@ public class ColorController {
             @ApiResponse(responseCode = "403", description = "Access denied – ADMIN role required",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = ApiError.class)
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                            {
+                              "message": "Access denied",
+                              "status": 403,
+                              "errorCode": "FORBIDDEN",
+                              "path": "/api/colors",
+                              "timestamp": "2025-06-08T16:00:00"
+                            }
+                            """
+                            )
                     )
             )
     })
@@ -204,13 +294,33 @@ public class ColorController {
             @ApiResponse(responseCode = "403", description = "Access denied – ADMIN role required",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = ApiError.class)
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                            {
+                              "message": "Access denied",
+                              "status": 403,
+                              "errorCode": "FORBIDDEN",
+                              "path": "/api/colors/3",
+                              "timestamp": "2025-06-08T16:00:00"
+                            }
+                            """
+                            )
                     )
             ),
             @ApiResponse(responseCode = "404", description = "Color not found",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = ApiError.class)
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                            {
+                              "message": "Color not found with id: 3",
+                              "status": 404,
+                              "errorCode": "COLOR_NOT_FOUND",
+                              "path": "/api/colors/3",
+                              "timestamp": "2025-06-08T16:00:00"
+                            }
+                            """
+                            )
                     )
             )
     })

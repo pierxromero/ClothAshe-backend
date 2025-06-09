@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -29,6 +30,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+
 @RestController
 @RequestMapping("/api/orders")
 @RequiredArgsConstructor
@@ -37,7 +39,6 @@ import java.util.List;
 public class OrderController {
 
     private final OrderService orderService;
-
 
     @Operation(
             summary = "Create a new order",
@@ -52,46 +53,131 @@ public class OrderController {
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Order created successfully",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = OrderResponseDTO.class))),
+                            schema = @Schema(implementation = OrderResponseDTO.class))
+            ),
             @ApiResponse(responseCode = "400", description = "Invalid request data",
-                    content = @Content(schema = @Schema(implementation = ApiError.class))),
-            @ApiResponse(responseCode = "403", description = "Access denied: invalid address or not client role"),
-            @ApiResponse(responseCode = "404", description = "Resource not found (address or cart)")
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                    {
+                      "message": "Shipping address is required",
+                      "status": 400,
+                      "errorCode": "BAD_REQUEST",
+                      "path": "/api/orders",
+                      "timestamp": "2025-06-08T16:00:00"
+                    }
+                    """
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "403", description = "Access denied: invalid address or not client role",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                    {
+                      "message": "Access denied",
+                      "status": 403,
+                      "errorCode": "FORBIDDEN",
+                      "path": "/api/orders",
+                      "timestamp": "2025-06-08T16:00:00"
+                    }
+                    """
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "404", description = "Resource not found (address or cart)",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                    {
+                      "message": "Cart not found or empty",
+                      "status": 404,
+                      "errorCode": "RESOURCE_NOT_FOUND",
+                      "path": "/api/orders",
+                      "timestamp": "2025-06-08T16:00:00"
+                    }
+                    """
+                            )
+                    )
+            )
     })
     @PreAuthorize("hasRole('CLIENT')")
     @PostMapping
     public ResponseEntity<OrderResponseDTO> createOrder(
             @Valid @RequestBody CreateOrderRequestDTO dto
     ) {
-        OrderResponseDTO created = orderService.createOrder(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(orderService.createOrder(dto));
     }
 
     @Operation(
             summary = "Create a payment for an order",
             description = "Allows a client to pay for an existing order in PENDING status.",
-            security = @SecurityRequirement(name = "bearerAuth")
+            security = @SecurityRequirement(name = "bearerAuth"),
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    description = "Payment details including order ID and amount",
+                    content = @Content(schema = @Schema(implementation = CreatePaymentRequestDTO.class))
+            )
     )
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Payment recorded successfully",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = PaymentResponseDTO.class))),
-            @ApiResponse(responseCode = "400", description = "Invalid payment data or amount mismatch"),
-            @ApiResponse(responseCode = "403", description = "Access denied: not order owner or invalid status"),
-            @ApiResponse(responseCode = "404", description = "Order not found")
+                            schema = @Schema(implementation = PaymentResponseDTO.class))
+            ),
+            @ApiResponse(responseCode = "400", description = "Invalid payment data or amount mismatch",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                    {
+                      "message": "Payment amount must match order total",
+                      "status": 400,
+                      "errorCode": "INVALID_PAYMENT_AMOUNT",
+                      "path": "/api/orders/payment",
+                      "timestamp": "2025-06-08T16:00:00"
+                    }
+                    """
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "403", description = "Access denied: not order owner or invalid status",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                    {
+                      "message": "Only orders in PENDING state can be paid",
+                      "status": 403,
+                      "errorCode": "PAYMENT_NOT_ALLOWED",
+                      "path": "/api/orders/payment",
+                      "timestamp": "2025-06-08T16:00:00"
+                    }
+                    """
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "404", description = "Order not found",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                    {
+                      "message": "Order not found",
+                      "status": 404,
+                      "errorCode": "ORDER_NOT_FOUND",
+                      "path": "/api/orders/payment",
+                      "timestamp": "2025-06-08T16:00:00"
+                    }
+                    """
+                            )
+                    )
+            )
     })
     @PreAuthorize("hasRole('CLIENT')")
     @PostMapping("/payment")
     public ResponseEntity<PaymentResponseDTO> createPayment(
-            @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    description = "Payment details including order ID and amount",
-                    required = true,
-                    content = @Content(schema = @Schema(implementation = CreatePaymentRequestDTO.class))
-            )
-            @Valid @org.springframework.web.bind.annotation.RequestBody CreatePaymentRequestDTO dto
+            @Valid @RequestBody CreatePaymentRequestDTO dto
     ) {
-        PaymentResponseDTO payment = orderService.createPayment(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(payment);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(orderService.createPayment(dto));
     }
 
     @Operation(
@@ -101,12 +187,13 @@ public class OrderController {
     )
     @ApiResponse(responseCode = "200", description = "List of user orders",
             content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
-                    array = @ArraySchema(schema = @Schema(implementation = OrderResponseDTO.class))))
+                    array = @ArraySchema(schema = @Schema(implementation = OrderResponseDTO.class))
+            )
+    )
     @PreAuthorize("hasRole('CLIENT')")
     @GetMapping("/me")
     public ResponseEntity<List<OrderResponseDTO>> listUserOrders() {
-        List<OrderResponseDTO> list = orderService.listUserOrders();
-        return ResponseEntity.ok(list);
+        return ResponseEntity.ok(orderService.listUserOrders());
     }
 
     @Operation(
@@ -117,17 +204,45 @@ public class OrderController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Order found",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = OrderResponseDTO.class))),
-            @ApiResponse(responseCode = "403", description = "Access denied: not owner or admin"),
-            @ApiResponse(responseCode = "404", description = "Order not found")
+                            schema = @Schema(implementation = OrderResponseDTO.class))
+            ),
+            @ApiResponse(responseCode = "403", description = "Access denied",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                    {
+                      "message": "No permission to view this order",
+                      "status": 403,
+                      "errorCode": "ACCESS_DENIED",
+                      "path": "/api/orders/123",
+                      "timestamp": "2025-06-08T16:00:00"
+                    }
+                    """
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "404", description = "Order not found",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                    {
+                      "message": "Order not found",
+                      "status": 404,
+                      "errorCode": "ORDER_NOT_FOUND",
+                      "path": "/api/orders/123",
+                      "timestamp": "2025-06-08T16:00:00"
+                    }
+                    """
+                            )
+                    )
+            )
     })
     @GetMapping("/{orderId}")
     public ResponseEntity<OrderResponseDTO> getOrderById(
             @Parameter(description = "ID of the order to retrieve", required = true, in = ParameterIn.PATH)
             @PathVariable @Min(1) Long orderId
     ) {
-        OrderResponseDTO dto = orderService.getOrderById(orderId);
-        return ResponseEntity.ok(dto);
+        return ResponseEntity.ok(orderService.getOrderById(orderId));
     }
 
     @Operation(
@@ -138,23 +253,33 @@ public class OrderController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Page of orders",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = Page.class))),
-            @ApiResponse(responseCode = "403", description = "Access denied: not admin")
+                            schema = @Schema(implementation = Page.class))
+            ),
+            @ApiResponse(responseCode = "403", description = "Access denied",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                    {
+                      "message": "Only admin can update order status",
+                      "status": 403,
+                      "errorCode": "ACCESS_DENIED",
+                      "path": "/api/orders/all",
+                      "timestamp": "2025-06-08T16:00:00"
+                    }
+                    """
+                            )
+                    )
+            )
     })
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/all")
     public ResponseEntity<Page<OrderResponseDTO>> listAllOrders(
-            @Parameter(description = "Filter by order status", required = false)
             @RequestParam(required = false) OrderStatus status,
-            @Parameter(description = "Filter by user ID", required = false)
             @RequestParam(required = false) @Min(1) Long userId,
-            @Parameter(description = "Page number (zero-based)")
             @RequestParam(defaultValue = "0") @Min(0) int page,
-            @Parameter(description = "Page size")
             @RequestParam(defaultValue = "10") @Min(1) int size
     ) {
-        Page<OrderResponseDTO> result = orderService.listAllOrders(status, userId, page, size);
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(orderService.listAllOrders(status, userId, page, size));
     }
 
     @Operation(
@@ -165,10 +290,53 @@ public class OrderController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Order status updated",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = OrderResponseDTO.class))),
-            @ApiResponse(responseCode = "400", description = "Invalid status change"),
-            @ApiResponse(responseCode = "403", description = "Access denied: not admin"),
-            @ApiResponse(responseCode = "404", description = "Order not found")
+                            schema = @Schema(implementation = OrderResponseDTO.class))
+            ),
+            @ApiResponse(responseCode = "400", description = "Invalid status change",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                    {
+                      "message": "Only DELIVERED orders can be returned",
+                      "status": 400,
+                      "errorCode": "INVALID_STATUS_UPDATE",
+                      "path": "/api/orders/123/status?newStatus=SHIPPED",
+                      "timestamp": "2025-06-08T16:00:00"
+                    }
+                    """
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "403", description = "Access denied",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                    {
+                      "message": "Only admin can update order status",
+                      "status": 403,
+                      "errorCode": "ACCESS_DENIED",
+                      "path": "/api/orders/123/status",
+                      "timestamp": "2025-06-08T16:00:00"
+                    }
+                    """
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "404", description = "Order not found",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                    {
+                      "message": "Order not found",
+                      "status": 404,
+                      "errorCode": "ORDER_NOT_FOUND",
+                      "path": "/api/orders/999/status",
+                      "timestamp": "2025-06-08T16:00:00"
+                    }
+                    """
+                            )
+                    )
+            )
     })
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{orderId}/status")
@@ -178,19 +346,61 @@ public class OrderController {
             @Parameter(description = "New status for the order", required = true)
             @RequestParam OrderStatus newStatus
     ) {
-        OrderResponseDTO updated = orderService.updateOrderStatus(orderId, newStatus);
-        return ResponseEntity.ok(updated);
+        return ResponseEntity.ok(orderService.updateOrderStatus(orderId, newStatus));
     }
 
-    @Operation(summary = "Cancel an order",
+    @Operation(
+            summary = "Cancel an order",
             description = "Allows the owner or an admin to cancel an order in PENDING status.",
             security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Order cancelled successfully"),
-            @ApiResponse(responseCode = "400", description = "Only PENDING orders can be cancelled"),
-            @ApiResponse(responseCode = "403", description = "Access denied"),
-            @ApiResponse(responseCode = "404", description = "Order not found")
+            @ApiResponse(responseCode = "400", description = "Only PENDING orders can be cancelled",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                    {
+                      "message": "Only PENDING orders can be cancelled",
+                      "status": 400,
+                      "errorCode": "ORDER_STATUS_UPDATE_NOT_ALLOWED",
+                      "path": "/api/orders/123/cancel",
+                      "timestamp": "2025-06-08T16:00:00"
+                    }
+                    """
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "403", description = "Access denied",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                    {
+                      "message": "No permission to cancel this order",
+                      "status": 403,
+                      "errorCode": "ACCESS_DENIED",
+                      "path": "/api/orders/123/cancel",
+                      "timestamp": "2025-06-08T16:00:00"
+                    }
+                    """
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "404", description = "Order not found",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                    {
+                      "message": "Order not found",
+                      "status": 404,
+                      "errorCode": "ORDER_NOT_FOUND",
+                      "path": "/api/orders/123/cancel",
+                      "timestamp": "2025-06-08T16:00:00"
+                    }
+                    """
+                            )
+                    )
+            )
     })
     @DeleteMapping("/{orderId}/cancel")
     public ResponseEntity<Void> cancelOrder(
@@ -201,17 +411,61 @@ public class OrderController {
         return ResponseEntity.noContent().build();
     }
 
-    @Operation(summary = "Return an order",
+    @Operation(
+            summary = "Return an order",
             description = "Allows the owner to return an order that has been delivered.",
             security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Order returned successfully",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = OrderResponseDTO.class))),
-            @ApiResponse(responseCode = "400", description = "Only DELIVERED orders can be returned"),
-            @ApiResponse(responseCode = "403", description = "Access denied"),
-            @ApiResponse(responseCode = "404", description = "Order not found")
+                            schema = @Schema(implementation = OrderResponseDTO.class))
+            ),
+            @ApiResponse(responseCode = "400", description = "Only DELIVERED orders can be returned",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                    {
+                      "message": "Only DELIVERED orders can be returned",
+                      "status": 400,
+                      "errorCode": "ORDER_STATUS_UPDATE_NOT_ALLOWED",
+                      "path": "/api/orders/123/return",
+                      "timestamp": "2025-06-08T16:00:00"
+                    }
+                    """
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "403", description = "Access denied",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                    {
+                      "message": "You can only return your own orders",
+                      "status": 403,
+                      "errorCode": "ACCESS_DENIED",
+                      "path": "/api/orders/123/return",
+                      "timestamp": "2025-06-08T16:00:00"
+                    }
+                    """
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "404", description = "Order not found",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(value = """
+                    {
+                      "message": "Order not found",
+                      "status": 404,
+                      "errorCode": "ORDER_NOT_FOUND",
+                      "path": "/api/orders/123/return",
+                      "timestamp": "2025-06-08T16:00:00"
+                    }
+                    """
+                            )
+                    )
+            )
     })
     @PreAuthorize("hasRole('CLIENT')")
     @PostMapping("/{orderId}/return")
@@ -219,7 +473,6 @@ public class OrderController {
             @Parameter(description = "ID of the order to return", required = true, in = ParameterIn.PATH)
             @PathVariable @Min(1) Long orderId
     ) {
-        OrderResponseDTO returned = orderService.returnOrder(orderId);
-        return ResponseEntity.ok(returned);
+        return ResponseEntity.ok(orderService.returnOrder(orderId));
     }
 }
