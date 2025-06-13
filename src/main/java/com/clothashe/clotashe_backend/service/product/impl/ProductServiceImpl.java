@@ -1,6 +1,7 @@
 package com.clothashe.clotashe_backend.service.product.impl;
 import com.clothashe.clotashe_backend.exception.products.CategoryAlreadyExistsException;
 import com.clothashe.clotashe_backend.exception.products.*;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,14 +31,7 @@ public class ProductServiceImpl implements ProductService {
     private final ColorRepository colorRepository;
     private final BrandRepository brandRepository;
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<ProductResponseDTO> findAll() {
-        return productRepository.findAll()
-                .stream()
-                .map(productMapper::toDto)
-                .collect(Collectors.toList());
-    }
+
 
     @Override
     @Transactional(readOnly = true)
@@ -50,6 +44,17 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     public ProductResponseDTO create(CreateProductRequestDTO dto) {
+        boolean exists = productRepository.existsByNameAndCategoryIdAndSizeIdAndColorIdAndBrandId(
+                dto.getName(),
+                dto.getCategoryId(),
+                dto.getSizeId(),
+                dto.getColorId(),
+                dto.getBrandId()
+        );
+        if (exists) {
+            throw new DuplicateProductException("Product already exists with the same name, category, size, color, and brand.");
+        }
+
         ProductEntity entity = productMapper.toEntity(dto);
 
         entity.setCategory(categoryRepository.findById(dto.getCategoryId())
@@ -105,50 +110,44 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ProductResponseDTO> findByCategoryId(Long categoryId) {
-        if (!categoryRepository.existsById(categoryId)) {
-            throw new CategoryAlreadyExistsException("Category not found with id: " + categoryId);
-        }
-
-        List<ProductEntity> products = productRepository.findByCategoryId(categoryId);
-
-        return products.stream()
-                .map(productMapper::toDto)
-                .collect(Collectors.toList());
+    public Page<ProductResponseDTO> findAll(Pageable pageable) {
+        Page<ProductEntity> page = productRepository.findAll(pageable);
+        return page.map(productMapper::toDto);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<ProductResponseDTO> findByPriceRange(Double minPrice, Double maxPrice) {
+    public Page<ProductResponseDTO> findByCategoryId(Long categoryId, Pageable pageable) {
+        if (!categoryRepository.existsById(categoryId)) {
+            throw new CategoryNotFoundException("Category not found with id: " + categoryId);
+        }
+        Page<ProductEntity> page = productRepository.findByCategoryId(categoryId, pageable);
+        return page.map(productMapper::toDto);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ProductResponseDTO> findByPriceRange(Double minPrice, Double maxPrice, Pageable pageable) {
         if (minPrice == null || maxPrice == null) {
             throw new PriceRangeException("Both minPrice and maxPrice must be provided.");
         }
-
         if (minPrice > maxPrice) {
             throw new PriceRangeException("minPrice cannot be greater than maxPrice.");
         }
-
-        List<ProductEntity> products = productRepository.findByPriceBetween(minPrice, maxPrice);
-
-        return products.stream()
-                .map(productMapper::toDto)
-                .collect(Collectors.toList());
+        Page<ProductEntity> page = productRepository.findByPriceBetween(minPrice, maxPrice, pageable);
+        return page.map(productMapper::toDto);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<ProductResponseDTO> findByStockAvailability(boolean onlyWithStock) {
-        List<ProductEntity> products;
-
+    public Page<ProductResponseDTO> findByStockAvailability(boolean onlyWithStock, Pageable pageable) {
+        Page<ProductEntity> page;
         if (onlyWithStock) {
-            products = productRepository.findByStockGreaterThan(0);
+            page = productRepository.findByStockGreaterThan(0, pageable);
         } else {
-            products = productRepository.findByStockIsNullOrStockLessThanEqual(0);
+            page = productRepository.findByStockIsNullOrStockLessThanEqual(0, pageable);
         }
-
-        return products.stream()
-                .map(productMapper::toDto)
-                .collect(Collectors.toList());
+        return page.map(productMapper::toDto);
     }
 
     @Override

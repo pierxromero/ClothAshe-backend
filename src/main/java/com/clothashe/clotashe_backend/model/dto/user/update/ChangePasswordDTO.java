@@ -26,7 +26,7 @@ public class ChangePasswordDTO {
     )
     private String currentPassword;
 
-    @NotBlank
+    @NotBlank(message = "New Password must not be blank")
     @Size(min = 6, message = "Password must be at least 6 characters long")
     @Schema(
             description = "New password with a minimum length of 6 characters.",

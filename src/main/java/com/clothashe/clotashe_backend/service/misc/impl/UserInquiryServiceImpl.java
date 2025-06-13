@@ -50,9 +50,7 @@ public class UserInquiryServiceImpl implements UserInquiryService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<UserInquiryResponseDTO> listAllInquiries(Boolean answered, Long userId, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("inquiryDate").descending());
-
+    public Page<UserInquiryResponseDTO> listAllInquiries(Boolean answered, Long userId, Pageable pageable) {
         Page<UserInquiryEntity> inquiries;
 
         if (answered != null && userId != null) {

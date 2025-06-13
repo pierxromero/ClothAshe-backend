@@ -9,9 +9,6 @@ import java.time.LocalDateTime;
 
 @Getter
 @Setter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 @Schema(
         name = "ApiError",
         description = "Standard structure to represent errors in API responses"
@@ -59,5 +56,8 @@ public class ApiError {
         this.path = path;
         this.errorCode = errorCode;
         this.timestamp = LocalDateTime.now().toString();
+    }
+
+    public ApiError() {
     }
 }

@@ -7,12 +7,13 @@ import com.clothashe.clotashe_backend.model.dto.user.update.ChangePasswordDTO;
 import com.clothashe.clotashe_backend.model.dto.user.update.LockUnlockDTO;
 import com.clothashe.clotashe_backend.model.dto.user.update.RoleChangeDTO;
 import com.clothashe.clotashe_backend.model.dto.user.update.UpdateUserDTO;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 
 public interface UserService {
     UserDTO getById(Long id);
-    List<UserDTO> getAll();
+    Page<UserDTO> getAll(Pageable pageable);
     UserDTO getByEmail(String email);
     List<UserDTO> getLockedUsers();
     UserDTO getMe();

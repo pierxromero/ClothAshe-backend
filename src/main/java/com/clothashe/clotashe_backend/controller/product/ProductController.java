@@ -1,28 +1,34 @@
 package com.clothashe.clotashe_backend.controller.product;
 
+
 import com.clothashe.clotashe_backend.exception.error.ApiError;
 import com.clothashe.clotashe_backend.model.dto.product.create.CreateProductRequestDTO;
 import com.clothashe.clotashe_backend.model.dto.product.response.ProductResponseDTO;
 import com.clothashe.clotashe_backend.model.dto.product.update.UpdateProductRequestDTO;
 import com.clothashe.clotashe_backend.service.product.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
 
 import java.util.List;
 @RestController
@@ -37,15 +43,7 @@ public class ProductController {
     @Operation(
             summary = "Create a new product",
             description = "Allows an ADMIN to create a new product with category, size, color and brand associations.",
-            security = @SecurityRequirement(name = "bearerAuth"),
-            requestBody = @RequestBody(
-                    required = true,
-                    description = "All details required to create a product.",
-                    content = @Content(
-                            mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = CreateProductRequestDTO.class)
-                    )
-            )
+            security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Product created successfully",
@@ -94,22 +92,27 @@ public class ProductController {
 
     @Operation(
             summary = "Get all products",
-            description = "Retrieves a list of all products, regardless of status."
+            description = "Retrieves a paginated list of all products, regardless of status."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "List of products returned",
+            @ApiResponse(responseCode = "200", description = "Page of products returned",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            array = @ArraySchema(
-                                    schema = @Schema(implementation = ProductResponseDTO.class)
-                            )
+                            schema = @Schema(implementation = Page.class)
                     )
             )
     })
     @GetMapping
-    public ResponseEntity<List<ProductResponseDTO>> findAll() {
-        List<ProductResponseDTO> list = productService.findAll();
-        return ResponseEntity.ok(list);
+    public ResponseEntity<Page<ProductResponseDTO>> findAll(
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "10") @Min(1) int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir
+    ) {
+        Pageable pageable = PageRequest.of(page, size,
+                sortDir.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending());
+        Page<ProductResponseDTO> productsPage = productService.findAll(pageable);
+        return ResponseEntity.ok(productsPage);
     }
 
     @Operation(
@@ -149,15 +152,7 @@ public class ProductController {
     @Operation(
             summary = "Update an existing product",
             description = "Allows an ADMIN to update product fields (any subset).",
-            security = @SecurityRequirement(name = "bearerAuth"),
-            requestBody = @RequestBody(
-                    required = true,
-                    description = "Fields to update for the product.",
-                    content = @Content(
-                            mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = UpdateProductRequestDTO.class)
-                    )
-            )
+            security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Product updated successfully",
@@ -266,15 +261,13 @@ public class ProductController {
 
     @Operation(
             summary = "Get products by category",
-            description = "Retrieves all products belonging to the given category."
+            description = "Retrieves a paginated list of products belonging to the given category."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Products returned",
+            @ApiResponse(responseCode = "200", description = "Page of products returned",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            array = @ArraySchema(
-                                    schema = @Schema(implementation = ProductResponseDTO.class)
-                            )
+                            schema = @Schema(implementation = Page.class)
                     )
             ),
             @ApiResponse(responseCode = "404", description = "Category not found",
@@ -282,34 +275,39 @@ public class ProductController {
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
                             schema = @Schema(implementation = ApiError.class),
                             examples = @ExampleObject(value = """
-                            {
-                              "message": "Category not found with id: 15",
-                              "status": 404,
-                              "errorCode": "CATEGORY_NOT_FOUND",
-                              "path": "/api/products/by-category/15",
-                              "timestamp": "2025-06-08T10:29:00"
-                            }
-                            """))
+                        {
+                          "message": "Category not found with id: 15",
+                          "status": 404,
+                          "errorCode": "CATEGORY_NOT_FOUND",
+                          "path": "/api/products/by-category/15",
+                          "timestamp": "2025-06-08T10:29:00"
+                        }
+                        """))
             )
     })
     @GetMapping("/by-category/{categoryId}")
-    public ResponseEntity<List<ProductResponseDTO>> getProductsByCategory(
-            @PathVariable Long categoryId
+    public ResponseEntity<Page<ProductResponseDTO>> getProductsByCategory(
+            @PathVariable Long categoryId,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "10") @Min(1) int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir
     ) {
-        return ResponseEntity.ok(productService.findByCategoryId(categoryId));
+        Pageable pageable = PageRequest.of(page, size,
+                sortDir.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending());
+        Page<ProductResponseDTO> productsPage = productService.findByCategoryId(categoryId, pageable);
+        return ResponseEntity.ok(productsPage);
     }
 
     @Operation(
             summary = "Get products by price range",
-            description = "Retrieves products whose price is between `minPrice` and `maxPrice`."
+            description = "Retrieves a paginated list of products whose price is between `minPrice` and `maxPrice`."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Products returned",
+            @ApiResponse(responseCode = "200", description = "Page of products returned",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            array = @ArraySchema(
-                                    schema = @Schema(implementation = ProductResponseDTO.class)
-                            )
+                            schema = @Schema(implementation = Page.class)
                     )
             ),
             @ApiResponse(responseCode = "400", description = "Invalid price range",
@@ -317,43 +315,55 @@ public class ProductController {
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
                             schema = @Schema(implementation = ApiError.class),
                             examples = @ExampleObject(value = """
-                            {
-                              "message": "minPrice must be less than or equal to maxPrice",
-                              "status": 400,
-                              "errorCode": "INVALID_PRICE_RANGE",
-                              "path": "/api/products/by-price",
-                              "timestamp": "2025-06-08T10:30:00"
-                            }
-                            """))
+                        {
+                          "message": "minPrice must be less than or equal to maxPrice",
+                          "status": 400,
+                          "errorCode": "INVALID_PRICE_RANGE",
+                          "path": "/api/products/by-price",
+                          "timestamp": "2025-06-08T10:30:00"
+                        }
+                        """))
             )
     })
     @GetMapping("/by-price")
-    public ResponseEntity<List<ProductResponseDTO>> getProductsByPriceRange(
+    public ResponseEntity<Page<ProductResponseDTO>> getProductsByPriceRange(
             @RequestParam Double minPrice,
-            @RequestParam Double maxPrice
+            @RequestParam Double maxPrice,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "10") @Min(1) int size,
+            @RequestParam(defaultValue = "price") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir
     ) {
-        return ResponseEntity.ok(productService.findByPriceRange(minPrice, maxPrice));
+        Pageable pageable = PageRequest.of(page, size,
+                sortDir.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending());
+        Page<ProductResponseDTO> productsPage = productService.findByPriceRange(minPrice, maxPrice, pageable);
+        return ResponseEntity.ok(productsPage);
     }
 
     @Operation(
             summary = "Get products by stock availability",
-            description = "Retrieves products filtered by stock availability. Set `onlyWithStock=true` to get only those with stock > 0."
+            description = "Retrieves a paginated list of products filtered by stock availability. Set `onlyWithStock=true` to get only those with stock > 0."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Products returned",
+            @ApiResponse(responseCode = "200", description = "Page of products returned",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            array = @ArraySchema(
-                                    schema = @Schema(implementation = ProductResponseDTO.class)
-                            )
+                            schema = @Schema(implementation = Page.class)
                     )
             )
     })
     @GetMapping("/by-stock")
-    public ResponseEntity<List<ProductResponseDTO>> getProductsByStockAvailability(
-            @RequestParam boolean onlyWithStock
+    public ResponseEntity<Page<ProductResponseDTO>> getProductsByStockAvailability(
+            @RequestParam boolean onlyWithStock,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "10") @Min(1) int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir
     ) {
-        return ResponseEntity.ok(productService.findByStockAvailability(onlyWithStock));
+        Pageable pageable = PageRequest.of(page, size,
+                sortDir.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending());
+        Page<ProductResponseDTO> productsPage = productService.findByStockAvailability(onlyWithStock, pageable);
+        return ResponseEntity.ok(productsPage);
     }
 
     @Operation(

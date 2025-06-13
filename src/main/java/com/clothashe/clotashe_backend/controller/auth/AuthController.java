@@ -6,6 +6,7 @@ import com.clothashe.clotashe_backend.model.dto.auth.LoginResponse;
 import com.clothashe.clotashe_backend.model.dto.auth.RegisterRequest;
 import com.clothashe.clotashe_backend.service.auth.AuthService;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,9 +19,11 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
+@Tag(name = "Authentication", description = "Endpoints for user authentication")
 public class AuthController {
     private final AuthService authService;
 
@@ -138,7 +141,7 @@ public class AuthController {
                     {
                       "message": "User with email 'newuser@example.com' already exists",
                       "status": 409,
-                      "errorCode": "USER_ALREADY_EXISTS",
+                      "errorCode": "EMAIL_ALREADY_EXISTS",
                       "path": "/auth/register",
                       "timestamp": "2025-06-08T16:00:00"
                     }

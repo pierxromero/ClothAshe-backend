@@ -16,8 +16,8 @@ import lombok.*;
 )
 public class UpdateUserDTO {
 
-    @NotBlank
     @Size(max = 100)
+    @Pattern(regexp = "^\\s*\\S.*$", message = "Full name must not contain only spaces")
     @Schema(
             description = "Full name of the user.",
             example = "Jane Doe",
@@ -26,8 +26,8 @@ public class UpdateUserDTO {
     )
     private String fullName;
 
-    @NotBlank
     @Email
+    @Pattern(regexp = "^\\s*\\S.*$", message = "Email must not contain only SPACE")
     @Schema(
             description = "Email address of the user.",
             example = "jane.doe@example.com",
@@ -35,7 +35,6 @@ public class UpdateUserDTO {
     )
     private String email;
 
-    @NotBlank(message = "Phone number must not be blank")
     @Pattern(
             regexp = "^[+]?[\\d\\s\\-]{7,20}$",
             message = "Phone number must be valid (7 to 20 characters, optional leading '+')"

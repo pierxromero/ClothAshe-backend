@@ -3,6 +3,8 @@ package com.clothashe.clotashe_backend.service.misc;
 import com.clothashe.clotashe_backend.model.dto.review.create.CreateProductCommentRequestDTO;
 import com.clothashe.clotashe_backend.model.dto.review.response.ProductCommentResponseDTO;
 import com.clothashe.clotashe_backend.model.dto.review.update.UpdateProductCommentRequestDTO;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -17,9 +19,9 @@ public interface ProductCommentService {
 
     List<ProductCommentResponseDTO> getCommentsByUser(Long userId);
 
-    List<ProductCommentResponseDTO> getCommentsByProduct(Long productId);
+    Page<ProductCommentResponseDTO> getCommentsByProduct(Long productId, Pageable pageable);
 
-    List<ProductCommentResponseDTO> getAllComments();
+    Page<ProductCommentResponseDTO> getAllComments(Pageable pageable);
 
     ProductCommentResponseDTO getCommentById(Long commentId);
 }

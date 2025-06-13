@@ -25,7 +25,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
@@ -47,10 +48,11 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<UserDTO> getAll() {
-        List<UserEntity> users = userRepository.findAll();
-        return userMapper.toDTOs(users);
+    public Page<UserDTO> getAll(Pageable pageable) {
+        Page<UserEntity> page = userRepository.findAll(pageable);
+        return page.map(userMapper::toUserDTO);
     }
+
 
     @Override
     @Transactional(readOnly = true)
@@ -99,6 +101,11 @@ public class UserServiceImpl implements UserService {
         }
         UserEntity targetUser = userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException(id));
+
+        if (currentUser.getId().equals(targetUser.getId()) && dto.getNewRole() != Role.OWNER) {
+            throw new UserAccessDeniedException("You cannot change your own role from OWNER to another role.");
+        }
+
         if (targetUser.getRole() == Role.OWNER && !targetUser.getId().equals(currentUser.getId())) {
             throw new UserAccessDeniedException("Cannot change the role of another OWNER.");
         }

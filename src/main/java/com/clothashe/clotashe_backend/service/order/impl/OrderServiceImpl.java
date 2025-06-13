@@ -169,8 +169,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<OrderResponseDTO> listAllOrders(OrderStatus status, Long userId, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("orderDate").descending());
+    public Page<OrderResponseDTO> listAllOrders(OrderStatus status, Long userId, Pageable pageable) {
         Page<OrderEntity> pageResult;
 
         if (status != null && userId != null) {

@@ -13,6 +13,8 @@ import com.clothashe.clotashe_backend.repository.misc.AddressRepository;
 import com.clothashe.clotashe_backend.service.auth.AuthService;
 import com.clothashe.clotashe_backend.service.misc.AddressService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,7 +44,9 @@ public class AddressServiceImpl implements AddressService {
         UserEntity user = authService.getAuthenticatedUser();
         AddressEntity address = addressRepository.findById(addressId)
                 .orElseThrow(() -> new AddressNotFoundException("Address not found"));
-
+        System.out.println("User id: " + user.getId());
+        System.out.println("User role: " + user.getRole());
+        System.out.println("Address user id: " + (address.getUser() != null ? address.getUser().getId() : "null"));
         if (!address.getUser().getId().equals(user.getId()) && !user.getRole().equals(Role.ADMIN)) {
             throw new UserAccessDeniedException("You are not allowed to delete this address");
         }
@@ -96,15 +100,13 @@ public class AddressServiceImpl implements AddressService {
     }
 
     @Override
-    public List<AddressResponseDTO> getAllAddresses() {
+    public Page<AddressResponseDTO> getAllAddresses(Pageable pageable) {
         UserEntity requester = authService.getAuthenticatedUser();
         if (!requester.getRole().equals(Role.ADMIN)) {
             throw new UserAccessDeniedException("Only admins can access all addresses");
         }
 
-        return addressRepository.findAll()
-                .stream()
-                .map(addressMapper::toDto)
-                .collect(Collectors.toList());
+        Page<AddressEntity> page = addressRepository.findAll(pageable);
+        return page.map(addressMapper::toDto);
     }
 }

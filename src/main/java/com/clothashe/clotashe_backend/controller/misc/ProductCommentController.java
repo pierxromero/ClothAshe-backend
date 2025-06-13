@@ -13,6 +13,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -319,6 +322,7 @@ public class ProductCommentController {
                     )
             )
     })
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<ProductCommentResponseDTO>> getCommentsByUser(
             @PathVariable @Min(1) @Parameter(description = "ID of the user", required = true) Long userId) {
@@ -328,57 +332,58 @@ public class ProductCommentController {
 
     @Operation(
             summary = "List comments by product",
-            description = "Fetches all comments made for a given product."
+            description = "Fetches paginated comments made for a given product."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Comments retrieved successfully",
                     content = @Content(mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = ProductCommentResponseDTO.class)))
+                            schema = @Schema(implementation = ProductCommentResponseDTO.class))
             ),
             @ApiResponse(responseCode = "401", description = "Unauthorized",
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = ApiError.class),
                             examples = @ExampleObject(value = """
-                    {
-                      "message": "Authentication required",
-                      "status": 401,
-                      "errorCode": "UNAUTHORIZED",
-                      "path": "/api/comments/product/20",
-                      "timestamp": "2025-06-08T16:00:00"
-                    }
-                    """
+                        {
+                          "message": "Authentication required",
+                          "status": 401,
+                          "errorCode": "UNAUTHORIZED",
+                          "path": "/api/comments/product/20",
+                          "timestamp": "2025-06-08T16:00:00"
+                        }
+                        """
                             )
                     )
             )
     })
     @GetMapping("/product/{productId}")
-    public ResponseEntity<List<ProductCommentResponseDTO>> getCommentsByProduct(
-            @PathVariable @Min(1) @Parameter(description = "ID of the product", required = true) Long productId) {
-        List<ProductCommentResponseDTO> list = commentService.getCommentsByProduct(productId);
-        return ResponseEntity.ok(list);
+    public ResponseEntity<Page<ProductCommentResponseDTO>> getCommentsByProduct(
+            @PathVariable @Min(1) @Parameter(description = "ID of the product", required = true) Long productId,
+            @ParameterObject Pageable pageable) {
+        Page<ProductCommentResponseDTO> page = commentService.getCommentsByProduct(productId, pageable);
+        return ResponseEntity.ok(page);
     }
 
     @Operation(
             summary = "List all comments (admin only)",
-            description = "Allows administrators to retrieve every comment in the system."
+            description = "Allows administrators to retrieve paginated comments in the system."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "All comments retrieved successfully",
                     content = @Content(mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = ProductCommentResponseDTO.class)))
+                            schema = @Schema(implementation = ProductCommentResponseDTO.class))
             ),
             @ApiResponse(responseCode = "403", description = "Forbidden – requires ADMIN role",
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = ApiError.class),
                             examples = @ExampleObject(value = """
-                    {
-                      "message": "Access denied",
-                      "status": 403,
-                      "errorCode": "FORBIDDEN",
-                      "path": "/api/comments",
-                      "timestamp": "2025-06-08T16:00:00"
-                    }
-                    """
+                        {
+                          "message": "Access denied",
+                          "status": 403,
+                          "errorCode": "FORBIDDEN",
+                          "path": "/api/comments",
+                          "timestamp": "2025-06-08T16:00:00"
+                        }
+                        """
                             )
                     )
             ),
@@ -386,22 +391,23 @@ public class ProductCommentController {
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = ApiError.class),
                             examples = @ExampleObject(value = """
-                    {
-                      "message": "Authentication required",
-                      "status": 401,
-                      "errorCode": "UNAUTHORIZED",
-                      "path": "/api/comments",
-                      "timestamp": "2025-06-08T16:00:00"
-                    }
-                    """
+                        {
+                          "message": "Authentication required",
+                          "status": 401,
+                          "errorCode": "UNAUTHORIZED",
+                          "path": "/api/comments",
+                          "timestamp": "2025-06-08T16:00:00"
+                        }
+                        """
                             )
                     )
             )
     })
     @GetMapping
-    public ResponseEntity<List<ProductCommentResponseDTO>> getAllComments() {
-        List<ProductCommentResponseDTO> list = commentService.getAllComments();
-        return ResponseEntity.ok(list);
+    public ResponseEntity<Page<ProductCommentResponseDTO>> getAllComments(
+            @ParameterObject Pageable pageable) {
+        Page<ProductCommentResponseDTO> page = commentService.getAllComments(pageable);
+        return ResponseEntity.ok(page);
     }
 
     @Operation(

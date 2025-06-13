@@ -4,17 +4,18 @@ import com.clothashe.clotashe_backend.model.dto.product.create.CreateBrandReques
 import com.clothashe.clotashe_backend.model.dto.product.response.BrandResponseDTO;
 import com.clothashe.clotashe_backend.model.dto.product.update.UpdateBrandRequestDTO;
 import com.clothashe.clotashe_backend.model.entity.product.BrandEntity;
-import org.mapstruct.BeanMapping;
-import org.mapstruct.Mapper;
-import org.mapstruct.MappingTarget;
-import org.mapstruct.NullValuePropertyMappingStrategy;
+import org.mapstruct.*;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface BrandMapper {
+
+    @Mapping(source = "name", target = "name")
+    @Mapping(source = "description", target = "description")
     BrandEntity toEntity(CreateBrandRequestDTO dto);
 
     BrandResponseDTO toDto(BrandEntity entity);
 
-    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(source = "name", target = "name")
+    @Mapping(source = "description", target = "description")
     void updateEntityFromDto(UpdateBrandRequestDTO dto, @MappingTarget BrandEntity entity);
 }

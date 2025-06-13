@@ -16,6 +16,8 @@ import com.clothashe.clotashe_backend.service.auth.AuthService;
 import com.clothashe.clotashe_backend.service.misc.ProductCommentService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -102,23 +104,19 @@ public class ProductCommentServiceImpl implements ProductCommentService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ProductCommentResponseDTO> getCommentsByProduct(Long productId) {
-        return commentRepository.findByProductId(productId)
-                .stream()
-                .map(commentMapper::toResponseDTO)
-                .collect(Collectors.toList());
+    public Page<ProductCommentResponseDTO> getCommentsByProduct(Long productId, Pageable pageable) {
+        Page<ProductCommentEntity> commentsPage = commentRepository.findByProductId(productId, pageable);
+        return commentsPage.map(commentMapper::toResponseDTO);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<ProductCommentResponseDTO> getAllComments() {
+    public Page<ProductCommentResponseDTO> getAllComments(Pageable pageable) {
         if (!authService.getAuthenticatedUser().getRole().equals(Role.ADMIN)) {
             throw new UserAccessDeniedException("Only admins can access all comments.");
         }
-        return commentRepository.findAll()
-                .stream()
-                .map(commentMapper::toResponseDTO)
-                .collect(Collectors.toList());
+        Page<ProductCommentEntity> page = commentRepository.findAll(pageable);
+        return page.map(commentMapper::toResponseDTO);
     }
 
     @Override

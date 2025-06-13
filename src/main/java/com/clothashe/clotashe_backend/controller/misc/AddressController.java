@@ -10,6 +10,8 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -272,30 +274,32 @@ public class AddressController {
         return ResponseEntity.ok(addressService.getAllAddressesByUserId(userId));
     }
 
-    @Operation(summary = "List all addresses", description = "Returns every address in the system. ADMIN only.")
+    @Operation(summary = "List all addresses with pagination", description = "Returns paginated addresses in the system. ADMIN only.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "All addresses retrieved successfully",
+            @ApiResponse(responseCode = "200", description = "Addresses retrieved successfully",
                     content = @Content(mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = AddressResponseDTO.class)))
+                            schema = @Schema(implementation = Page.class) // O usar un esquema custom para paginación
+                    )
             ),
             @ApiResponse(responseCode = "403", description = "Access denied",
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = ApiError.class),
                             examples = @ExampleObject(value = """
-                    {
-                      "message": "Access denied",
-                      "status": 403,
-                      "errorCode": "FORBIDDEN",
-                      "path": "/api/addresses",
-                      "timestamp": "2025-06-08T16:00:00"
-                    }
-                    """
+                {
+                  "message": "Access denied",
+                  "status": 403,
+                  "errorCode": "FORBIDDEN",
+                  "path": "/api/addresses",
+                  "timestamp": "2025-06-08T16:00:00"
+                }
+                """
                             )
                     )
             )
     })
     @GetMapping
-    public ResponseEntity<List<AddressResponseDTO>> getAllAddresses() {
-        return ResponseEntity.ok(addressService.getAllAddresses());
+    public ResponseEntity<Page<AddressResponseDTO>> getAllAddresses(Pageable pageable) {
+        Page<AddressResponseDTO> addressesPage = addressService.getAllAddresses(pageable);
+        return ResponseEntity.ok(addressesPage);
     }
 }

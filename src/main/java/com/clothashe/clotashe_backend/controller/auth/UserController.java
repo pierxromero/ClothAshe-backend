@@ -9,8 +9,13 @@ import com.clothashe.clotashe_backend.model.dto.user.update.RoleChangeDTO;
 import com.clothashe.clotashe_backend.model.dto.user.update.UpdateUserDTO;
 import com.clothashe.clotashe_backend.service.auth.UserService;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -22,7 +27,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 
 @RestController
@@ -30,27 +35,28 @@ import java.util.List;
 @RequiredArgsConstructor
 @SecurityRequirement(name = "bearerAuth")
 @Validated
+@Tag(name = "Users", description = "Operations with users")
 public class UserController {
 
     private final UserService userService;
 
     // ======================= ADMIN / OWNER =======================
 
-    @Operation(summary = "List all users", description = "Returns all registered users. ADMIN only.")
+    @Operation(summary = "List all users (paginated)", description = "Returns a paginated list of all registered users. ADMIN only.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Users retrieved successfully"),
             @ApiResponse(responseCode = "401", description = "Unauthorized",
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = ApiError.class),
                             examples = @ExampleObject(value = """
-                    {
-                      "message": "Authentication required",
-                      "status": 401,
-                      "errorCode": "UNAUTHORIZED",
-                      "path": "/api/users",
-                      "timestamp": "2025-06-08T16:00:00"
-                    }
-                    """
+                {
+                  "message": "Authentication required",
+                  "status": 401,
+                  "errorCode": "UNAUTHORIZED",
+                  "path": "/api/users",
+                  "timestamp": "2025-06-08T16:00:00"
+                }
+                """
                             )
                     )
             ),
@@ -58,22 +64,23 @@ public class UserController {
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = ApiError.class),
                             examples = @ExampleObject(value = """
-                    {
-                      "message": "Access denied",
-                      "status": 403,
-                      "errorCode": "FORBIDDEN",
-                      "path": "/api/users",
-                      "timestamp": "2025-06-08T16:00:00"
-                    }
-                    """
+                {
+                  "message": "Access denied",
+                  "status": 403,
+                  "errorCode": "FORBIDDEN",
+                  "path": "/api/users",
+                  "timestamp": "2025-06-08T16:00:00"
+                }
+                """
                             )
                     )
             )
     })
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
-    public ResponseEntity<List<UserDTO>> getAll() {
-        return ResponseEntity.ok(userService.getAll());
+    public ResponseEntity<Page<UserDTO>> getAll(
+            @ParameterObject @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
+        return ResponseEntity.ok(userService.getAll(pageable));
     }
 
     @Operation(summary = "Get user by ID", description = "Retrieves a user by their ID. ADMIN only.")

@@ -20,7 +20,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -259,14 +261,14 @@ public class OrderController {
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = ApiError.class),
                             examples = @ExampleObject(value = """
-                    {
-                      "message": "Only admin can update order status",
-                      "status": 403,
-                      "errorCode": "ACCESS_DENIED",
-                      "path": "/api/orders/all",
-                      "timestamp": "2025-06-08T16:00:00"
-                    }
-                    """
+                {
+                  "message": "Only admin can update order status",
+                  "status": 403,
+                  "errorCode": "ACCESS_DENIED",
+                  "path": "/api/orders/all",
+                  "timestamp": "2025-06-08T16:00:00"
+                }
+                """
                             )
                     )
             )
@@ -276,10 +278,9 @@ public class OrderController {
     public ResponseEntity<Page<OrderResponseDTO>> listAllOrders(
             @RequestParam(required = false) OrderStatus status,
             @RequestParam(required = false) @Min(1) Long userId,
-            @RequestParam(defaultValue = "0") @Min(0) int page,
-            @RequestParam(defaultValue = "10") @Min(1) int size
+            @ParameterObject Pageable pageable
     ) {
-        return ResponseEntity.ok(orderService.listAllOrders(status, userId, page, size));
+        return ResponseEntity.ok(orderService.listAllOrders(status, userId, pageable));
     }
 
     @Operation(

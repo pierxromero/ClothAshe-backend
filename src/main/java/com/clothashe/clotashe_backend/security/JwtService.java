@@ -20,12 +20,10 @@ public class JwtService {
 
     private static final long EXPIRATION_TIME = 1000 * 60 * 60 * 24; // 24 horas
 
-    // 1. Generate token
     public String generateToken(UserDetails userDetails) {
         return generateToken(new HashMap<>(), userDetails);
     }
 
-    // 2. Permit to add custom claims (extra info in the payload)
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
         return Jwts.builder()
                 .setClaims(extraClaims)
@@ -36,34 +34,28 @@ public class JwtService {
                 .compact();
     }
 
-    // 3. Extract username
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }
 
-    // 4. Verify if the token is valid
     public boolean isTokenValid(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
         return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
     }
 
-    // 5. Verify if the token is expired
     private boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());
     }
 
-    // 6. Extract expiration date
     private Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
     }
 
-    // 7. Extract claimx
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
     }
 
-    // 8. Extract all claims
     private Claims extractAllClaims(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(getSignInKey())
@@ -72,7 +64,6 @@ public class JwtService {
                 .getBody();
     }
 
-    // 9. Convert the secret string to a real key
     private Key getSignInKey() {
         return Keys.hmacShaKeyFor(secretKey.getBytes());
     }

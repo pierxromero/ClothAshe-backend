@@ -3,12 +3,14 @@ package com.clothashe.clotashe_backend.service.product;
 import com.clothashe.clotashe_backend.model.dto.product.create.CreateProductRequestDTO;
 import com.clothashe.clotashe_backend.model.dto.product.response.ProductResponseDTO;
 import com.clothashe.clotashe_backend.model.dto.product.update.UpdateProductRequestDTO;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
 public interface ProductService {
 
-    List<ProductResponseDTO> findAll();
+    Page<ProductResponseDTO> findAll(Pageable pageable);
 
     ProductResponseDTO findById(Long id);
 
@@ -18,11 +20,11 @@ public interface ProductService {
 
     void delete(Long id);
 
-    List<ProductResponseDTO> findByCategoryId(Long categoryId);
+    Page<ProductResponseDTO> findByCategoryId(Long categoryId, Pageable pageable);
 
-    List<ProductResponseDTO> findByPriceRange(Double minPrice, Double maxPrice);
+    Page<ProductResponseDTO> findByPriceRange(Double minPrice, Double maxPrice, Pageable pageable);
 
-    List<ProductResponseDTO> findByStockAvailability(boolean onlyWithStock);
+    Page<ProductResponseDTO> findByStockAvailability(boolean onlyWithStock, Pageable pageable);
 
     List<ProductResponseDTO> findTop10ByRating();
 }

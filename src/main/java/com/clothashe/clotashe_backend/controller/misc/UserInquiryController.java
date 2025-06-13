@@ -12,7 +12,9 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -75,6 +77,7 @@ public class UserInquiryController {
                     )
             )
     })
+    @PreAuthorize("hasRole('CLIENT')")
     @PostMapping
     public ResponseEntity<UserInquiryResponseDTO> createInquiry(
             @Valid @RequestBody CreateUserInquiryRequestDTO dto) {
@@ -96,45 +99,42 @@ public class UserInquiryController {
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = ApiError.class),
                             examples = @ExampleObject(value = """
-                    {
-                      "message": "Page index must not be negative",
-                      "status": 400,
-                      "errorCode": "BAD_REQUEST",
-                      "path": "/api/inquiries/all",
-                      "timestamp": "2025-06-08T16:00:00"
-                    }
-                    """
-                            )
+                {
+                  "message": "Page index must not be negative",
+                  "status": 400,
+                  "errorCode": "BAD_REQUEST",
+                  "path": "/api/inquiries/all",
+                  "timestamp": "2025-06-08T16:00:00"
+                }
+                """)
                     )
             ),
             @ApiResponse(responseCode = "401", description = "Unauthorized",
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = ApiError.class),
                             examples = @ExampleObject(value = """
-                    {
-                      "message": "Authentication required",
-                      "status": 401,
-                      "errorCode": "UNAUTHORIZED",
-                      "path": "/api/inquiries/all",
-                      "timestamp": "2025-06-08T16:00:00"
-                    }
-                    """
-                            )
+                {
+                  "message": "Authentication required",
+                  "status": 401,
+                  "errorCode": "UNAUTHORIZED",
+                  "path": "/api/inquiries/all",
+                  "timestamp": "2025-06-08T16:00:00"
+                }
+                """)
                     )
             ),
             @ApiResponse(responseCode = "403", description = "Access denied",
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = ApiError.class),
                             examples = @ExampleObject(value = """
-                    {
-                      "message": "Admin privileges required",
-                      "status": 403,
-                      "errorCode": "FORBIDDEN",
-                      "path": "/api/inquiries/all",
-                      "timestamp": "2025-06-08T16:00:00"
-                    }
-                    """
-                            )
+                {
+                  "message": "Admin privileges required",
+                  "status": 403,
+                  "errorCode": "FORBIDDEN",
+                  "path": "/api/inquiries/all",
+                  "timestamp": "2025-06-08T16:00:00"
+                }
+                """)
                     )
             )
     })
@@ -143,9 +143,9 @@ public class UserInquiryController {
     public ResponseEntity<Page<UserInquiryResponseDTO>> listAllInquiries(
             @Parameter(description = "Filter by answered status") @RequestParam(required = false) Boolean answered,
             @Parameter(description = "Filter by user ID") @RequestParam(required = false) @Min(1) Long userId,
-            @Parameter(description = "Page number (zero-based)") @RequestParam(defaultValue = "0") @Min(0) int page,
-            @Parameter(description = "Page size") @RequestParam(defaultValue = "10") @Min(1) int size) {
-        Page<UserInquiryResponseDTO> result = inquiryService.listAllInquiries(answered, userId, page, size);
+            @ParameterObject Pageable pageable
+    ) {
+        Page<UserInquiryResponseDTO> result = inquiryService.listAllInquiries(answered, userId, pageable);
         return ResponseEntity.ok(result);
     }
 
@@ -175,6 +175,7 @@ public class UserInquiryController {
                     )
             )
     })
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/me")
     public ResponseEntity<List<UserInquiryResponseDTO>> listMyInquiries() {
         List<UserInquiryResponseDTO> list = inquiryService.listUserInquiries();
@@ -237,6 +238,7 @@ public class UserInquiryController {
                     )
             )
     })
+    @PreAuthorize("hasRole('CLIENT') or hasRole('ADMIN')")
     @GetMapping("/{inquiryId}")
     public ResponseEntity<UserInquiryResponseDTO> getInquiryById(
             @Parameter(description = "ID of the inquiry to retrieve", required = true)
@@ -377,6 +379,7 @@ public class UserInquiryController {
                     )
             )
     })
+    @PreAuthorize("hasRole('ADMIN') or hasRole('CLIENT')")
     @DeleteMapping("/{inquiryId}")
     public ResponseEntity<Void> deleteInquiry(
             @Parameter(description = "ID of the inquiry to delete", required = true)
