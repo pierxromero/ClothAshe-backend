@@ -1,0 +1,201 @@
+@startuml
+
+class AuthInfoEntity {
+  - id: Long
+  - email: String
+  - passwordHash: String
+  - createdAt: LocalDateTime
+  - isEnabled: Boolean
+  - isLocked: Boolean
+  - user: UserEntity
+}
+
+class UserEntity {
+  - id: Long
+  - fullName: String
+  - email: String
+  - numberPhone: String
+  - lastLoginDate: LocalDateTime
+  - role: Role (enum)
+  - authInfo: AuthInfoEntity
+  - purchaseHistory: List<OrderEntity>
+  - favoriteProducts: List<FavoriteProductEntity>
+  - addresses: List<AddressEntity>
+  - cart: CartEntity
+}
+
+class CartEntity {
+  - id: Long
+  - createdDate: LocalDateTime
+  - active: Boolean
+  - user: UserEntity
+  - items: List<CartItemEntity>
+}
+
+class CartItemEntity {
+  - id: Long
+  - quantity: Integer
+  - unitPrice: BigDecimal
+  - cart: CartEntity
+  - product: ProductEntity
+}
+
+class ProductEntity {
+  - id: Long
+  - name: String
+  - description: String
+  - price: BigDecimal
+  - stockQuantity: Integer
+  - brand: BrandEntity
+  - category: CategoryEntity
+  - color: ColorEntity
+  - size: SizeEntity
+  - comments: List<ProductCommentEntity>
+}
+
+class BrandEntity {
+  - id: Long
+  - name: String
+}
+
+class CategoryEntity {
+  - id: Long
+  - name: String
+}
+
+class ColorEntity {
+  - id: Long
+  - name: String
+  - hexCode: String
+}
+
+class SizeEntity {
+  - id: Long
+  - name: String
+}
+
+class ProductCommentEntity {
+  - id: Long
+  - content: String
+  - rating: Integer
+  - createdDate: LocalDateTime
+  - user: UserEntity
+  - product: ProductEntity
+}
+
+class FavoriteProductEntity {
+  - id: Long
+  - user: UserEntity
+  - product: ProductEntity
+  - addedDate: LocalDateTime
+}
+
+class AddressEntity {
+  - id: Long
+  - street: String
+  - city: String
+  - state: String
+  - postalCode: String
+  - country: String
+  - user: UserEntity
+}
+
+class OrderEntity {
+  - id: Long
+  - orderDate: LocalDateTime
+  - status: OrderStatus (enum)
+  - user: UserEntity
+  - items: List<OrderItemEntity>
+  - payment: PaymentEntity
+  - deliveryAddress: AddressEntity
+}
+
+class OrderItemEntity {
+  - id: Long
+  - quantity: Integer
+  - unitPrice: BigDecimal
+  - order: OrderEntity
+  - product: ProductEntity
+}
+
+class PaymentEntity {
+  - id: Long
+  - paymentDate: LocalDateTime
+  - amount: BigDecimal
+  - method: String
+  - order: OrderEntity
+}
+
+class UserInquiryEntity {
+  - id: Long
+  - question: String
+  - answer: String
+  - user: UserEntity
+  - createdDate: LocalDateTime
+  - answeredDate: LocalDateTime
+}
+
+enum Role {
+  ADMIN
+  USER
+  OWNER
+}
+
+enum PaymentMethod {
+  CREDIT_CARD
+  PAYPAL
+  BANK_TRANSFER
+  DEBIT_CARD
+  CASH
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  PAID
+  RETURNED
+}
+
+
+
+' Relaciones
+
+AuthInfoEntity "1" -- "1" UserEntity : user
+UserEntity "1" -- "1" AuthInfoEntity : authInfo
+UserEntity "1" -- "1" CartEntity : cart
+CartEntity "1" -- "*" CartItemEntity : items
+CartItemEntity "*" -- "1" CartEntity : cart
+CartItemEntity "*" -- "1" ProductEntity : product
+ProductEntity "*" -- "1" BrandEntity : brand
+ProductEntity "*" -- "1" CategoryEntity : category
+ProductEntity "*" -- "1" ColorEntity : color
+ProductEntity "*" -- "1" SizeEntity : size
+ProductEntity "1" -- "*" ProductCommentEntity : comments
+ProductCommentEntity "*" -- "1" UserEntity : user
+ProductCommentEntity "*" -- "1" ProductEntity : product
+UserEntity "1" -- "*" FavoriteProductEntity : favoriteProducts
+FavoriteProductEntity "*" -- "1" UserEntity : user
+FavoriteProductEntity "*" -- "1" ProductEntity : product
+UserEntity "1" -- "*" AddressEntity : addresses
+AddressEntity "*" -- "1" UserEntity : user
+UserEntity "1" -- "*" OrderEntity : purchaseHistory
+OrderEntity "*" -- "1" UserEntity : user
+OrderEntity "1" -- "*" OrderItemEntity : items
+OrderItemEntity "*" -- "1" ProductEntity : product
+OrderItemEntity "*" -- "1" OrderEntity : order
+OrderEntity "1" -- "1" PaymentEntity : payment
+PaymentEntity "1" -- "1" OrderEntity : order
+OrderEntity "1" -- "1" AddressEntity : deliveryAddress
+UserEntity "1" -- "*" UserInquiryEntity : inquiries
+UserInquiryEntity "*" -- "1" UserEntity : user
+
+@enduml
