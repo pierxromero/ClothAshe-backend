@@ -98,7 +98,7 @@ The following features were planned but not implemented due to time constraints.
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-username/ClothAshe-backend.git
+   git clone https://github.com/pierxromero/ClothAshe-backend.git
 Configure the application.yml or application.properties file with your database credentials.
 
 Make sure Lombok is enabled as mentioned above.
